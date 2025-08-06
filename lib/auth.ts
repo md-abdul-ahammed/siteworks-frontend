@@ -24,6 +24,8 @@ export interface User {
   goCardlessBankAccountId?: string;
   goCardlessMandateId?: string;
   mandateStatus?: string;
+  // OpenPhone fields
+  openPhoneContactId?: string;
 }
 
 export interface AuthTokens {
@@ -464,9 +466,32 @@ class AuthService {
   }
 
   async updateProfile(profileData: Partial<User>): Promise<User> {
+    // Format the data for the backend API
+    const formattedData: Record<string, string | undefined> = {};
+    
+    // Basic profile fields
+    if (profileData.firstName !== undefined) formattedData.firstName = profileData.firstName;
+    if (profileData.lastName !== undefined) formattedData.lastName = profileData.lastName;
+    if (profileData.companyName !== undefined) formattedData.companyName = profileData.companyName;
+    if (profileData.email !== undefined) formattedData.email = profileData.email;
+    if (profileData.phone !== undefined) formattedData.phone = profileData.phone;
+    
+    // Address fields - nest them under address object
+    const addressFields: Record<string, string | undefined> = {};
+    if (profileData.addressLine1 !== undefined) addressFields.line1 = profileData.addressLine1;
+    if (profileData.addressLine2 !== undefined) addressFields.line2 = profileData.addressLine2;
+    if (profileData.city !== undefined) addressFields.city = profileData.city;
+    if (profileData.postcode !== undefined) addressFields.postcode = profileData.postcode;
+    if (profileData.state !== undefined) addressFields.state = profileData.state;
+    
+    // Only add address object if there are address fields
+    if (Object.keys(addressFields).length > 0) {
+      (formattedData as Record<string, unknown>).address = addressFields;
+    }
+
     const response = await this.makeRequest<{ success: boolean; customer: User }>('/api/customers/profile', {
       method: 'PUT',
-      body: JSON.stringify(profileData),
+      body: JSON.stringify(formattedData),
     });
 
     this.user = response.customer; // Backend returns 'customer' not 'user'
