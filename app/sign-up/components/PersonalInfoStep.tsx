@@ -1,0 +1,168 @@
+import React, { useEffect } from 'react';
+import { FormStepProps } from '../types/customer';
+import { PhoneInput } from '@/components/ui/phone-input';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { parsePhoneNumber } from 'libphonenumber-js';
+
+import { FORM_CONSTANTS } from '../constants/form';
+
+// Create a mapping from phone country codes to address country codes
+const PHONE_TO_ADDRESS_COUNTRY_MAPPING: Record<string, string> = {
+  'US': 'US', // United States
+  'CA': 'CA', // Canada
+  'GB': 'GB', // United Kingdom
+  'AU': 'AU', // Australia
+  'NZ': 'NZ', // New Zealand
+  'DE': 'DE', // Germany
+  'FR': 'FR', // France
+  'IT': 'IT', // Italy
+  'ES': 'ES', // Spain
+  'NL': 'NL', // Netherlands
+  'BE': 'BE', // Belgium
+  'CH': 'CH', // Switzerland
+  'AT': 'AT', // Austria
+  'SE': 'SE', // Sweden
+  'NO': 'NO', // Norway
+  'DK': 'DK', // Denmark
+  'FI': 'FI', // Finland
+  'IE': 'IE', // Ireland
+  'PL': 'PL', // Poland
+  'CZ': 'CZ', // Czech Republic
+  'HU': 'HU', // Hungary
+  'PT': 'PT', // Portugal
+  'GR': 'GR', // Greece
+  'HR': 'HR', // Croatia
+  'SI': 'SI', // Slovenia
+  'SK': 'SK', // Slovakia
+  'EE': 'EE', // Estonia
+  'LV': 'LV', // Latvia
+  'LT': 'LT', // Lithuania
+  'LU': 'LU', // Luxembourg
+  'MT': 'MT', // Malta
+  'CY': 'CY', // Cyprus
+  'BG': 'BG', // Bulgaria
+  'RO': 'RO', // Romania
+  'IS': 'IS', // Iceland
+};
+
+const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, setValue }) => {
+  const phoneValue = watch ? watch('phone') : '';
+
+  const handlePhoneChange = (value: string | undefined) => {
+    // Convert undefined to empty string for form validation
+    const phoneValue = value || '';
+    setValue?.('phone', phoneValue, { shouldValidate: true });
+  };
+
+  // Effect to automatically update country based on phone number
+  useEffect(() => {
+    if (phoneValue && setValue) {
+      try {
+        const parsedPhone = parsePhoneNumber(phoneValue);
+        if (parsedPhone && parsedPhone.country) {
+          const phoneCountryCode = parsedPhone.country;
+          const addressCountryCode = PHONE_TO_ADDRESS_COUNTRY_MAPPING[phoneCountryCode];
+          
+          // Only update if we have a mapping for this country and it's different from current
+          if (addressCountryCode) {
+            const currentCountry = watch?.('countryOfResidence');
+            if (currentCountry !== addressCountryCode) {
+              setValue('countryOfResidence', addressCountryCode, { shouldValidate: true });
+            }
+          }
+        }
+      } catch (error) {
+        // Silently handle parsing errors - phone number might be incomplete
+        console.debug('Phone number parsing error:', error);
+      }
+    }
+  }, [phoneValue, setValue, watch]);
+
+  // Get a more user-friendly error message for phone
+  const getPhoneErrorMessage = () => {
+    if (!errors.phone) return null;
+    
+    if (errors.phone.message?.includes('required')) {
+      return "Phone number is required";
+    }
+    
+    // For all validation errors, show a clear message
+    return "Please enter a valid phone number with country code (e.g., +1 555 123 4567)";
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+      
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">First Name</Label>
+          <Input
+            {...register("firstName")}
+            type="text"
+            id="firstName"
+            placeholder="Enter your first name"
+          />
+          {errors.firstName && (
+            <p className="text-xs text-red-600">{errors.firstName.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Last Name</Label>
+          <Input
+            {...register("lastName")}
+            type="text"
+            id="lastName"
+            placeholder="Enter your last name"
+          />
+          {errors.lastName && (
+            <p className="text-xs text-red-600">{errors.lastName.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <Label htmlFor="companyName">Company Name <span className="text-gray-500">(optional)</span></Label>
+        <Input
+          {...register("companyName")}
+          type="text"
+          id="companyName"
+          placeholder="Enter your company name"
+        />
+        {errors.companyName && (
+          <p className="text-xs text-red-600">{errors.companyName.message}</p>
+        )}
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <Label htmlFor="phone">Phone Number</Label>
+        <PhoneInput
+          id="phone"
+          placeholder="Enter your phone number"
+          value={phoneValue}
+          onChange={handlePhoneChange}
+          countries={FORM_CONSTANTS.COUNTRIES.map(country => country.value)}
+          onBlur={() => {
+            // Trigger validation on blur
+            setValue?.('phone', phoneValue, { shouldValidate: true });
+          }}
+        />
+        {errors.phone && (
+          <p className="text-xs text-red-600">{getPhoneErrorMessage()}</p>
+        )}
+        {!errors.phone && phoneValue && (
+          <p className="text-xs text-gray-600 flex items-center gap-1">
+            <svg className="h-3 w-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            Valid phone number format
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default PersonalInfoStep; 
