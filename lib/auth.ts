@@ -464,7 +464,7 @@ class AuthService {
   }
 
   async updateProfile(profileData: Partial<User>): Promise<User> {
-    const response = await this.makeRequest<{ success: boolean; customer: User }>('/api/auth/profile', {
+    const response = await this.makeRequest<{ success: boolean; customer: User }>('/api/customers/profile', {
       method: 'PUT',
       body: JSON.stringify(profileData),
     });
@@ -476,7 +476,7 @@ class AuthService {
   }
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-    await this.makeRequest('/api/auth/change-password', {
+    await this.makeRequest('/api/customers/change-password', {
       method: 'PUT',
       body: JSON.stringify({ currentPassword, newPassword }),
     });

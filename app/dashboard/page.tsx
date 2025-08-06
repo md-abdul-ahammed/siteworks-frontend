@@ -20,6 +20,8 @@ const DashboardPage: React.FC = () => {
   const [editForm, setEditForm] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
+    companyName: user?.companyName || '',
+    email: user?.email || '',
     phone: user?.phone || '',
     addressLine1: user?.addressLine1 || '',
     addressLine2: user?.addressLine2 || '',
@@ -34,6 +36,8 @@ const DashboardPage: React.FC = () => {
       setEditForm({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
+        companyName: user.companyName || '',
+        email: user.email || '',
         phone: user.phone || '',
         addressLine1: user.addressLine1 || '',
         addressLine2: user.addressLine2 || '',
@@ -278,20 +282,9 @@ const DashboardPage: React.FC = () => {
               <CardContent className="space-y-4">
                 {renderEditableField('firstName', 'First Name', editForm.firstName, <User className="h-4 w-4" />)}
                 {renderEditableField('lastName', 'Last Name', editForm.lastName, <User className="h-4 w-4" />)}
+                {renderEditableField('companyName', 'Company Name', editForm.companyName, <User className="h-4 w-4" />)}
+                {renderEditableField('email', 'Email', editForm.email, <Mail className="h-4 w-4" />)}
                 {renderEditableField('phone', 'Phone', editForm.phone, <Phone className="h-4 w-4" />)}
-                
-                {/* Email is read-only */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <div className="text-gray-500">
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <Label className="text-xs font-medium text-gray-500">Email</Label>
-                      <p className="text-gray-900 font-medium">{user?.email}</p>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
 

@@ -130,6 +130,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setError('Invalid or expired reset token. Please request a new password reset.');
           toast.error('Invalid or expired reset token. Please request a new password reset.');
           break;
+        case 'EMAIL_TAKEN':
+          setError('This email is already taken by another user. Please use a different email.');
+          toast.error('This email is already taken by another user. Please use a different email.');
+          break;
         case 'TIMEOUT_ERROR':
           setError('Request timeout. Please try again.');
           toast.error('Request timeout. Please try again.');
