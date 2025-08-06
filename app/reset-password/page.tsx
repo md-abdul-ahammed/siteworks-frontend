@@ -24,6 +24,8 @@ const ResetPasswordPage: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifyingToken, setIsVerifyingToken] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const verificationInProgress = useRef(false);
 
   const {
@@ -34,6 +36,30 @@ const ResetPasswordPage: React.FC = () => {
   } = useForm<ResetPasswordFormData>();
 
   const token = searchParams.get('token');
+  const watchedPassword = watch?.('newPassword') || '';
+
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { strength: 0, label: '', color: '' };
+    
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[@$!%*?&]/.test(password)) score++;
+    
+    const strengthMap = {
+      1: { label: 'Very Weak', color: 'bg-red-500' },
+      2: { label: 'Weak', color: 'bg-orange-500' },
+      3: { label: 'Fair', color: 'bg-yellow-500' },
+      4: { label: 'Good', color: 'bg-gray-500' },
+      5: { label: 'Strong', color: 'bg-gray-500' },
+    };
+    
+    return { strength: score, ...strengthMap[score as keyof typeof strengthMap] };
+  };
+
+  const passwordStrength = getPasswordStrength(watchedPassword);
 
   useEffect(() => {
     let isMounted = true;
@@ -103,24 +129,24 @@ const ResetPasswordPage: React.FC = () => {
 
   if (isValidToken === null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="flex items-center justify-center mb-8">
-              <div className="bg-gray-800 p-3 rounded-full mr-4">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <h1 className="text-2xl font-bold text-gray-900">SiteWorks</h1>
-                <p className="text-sm text-gray-600">A WEBSITE THAT WORKS FOR YOU!</p>
-              </div>
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <img 
+                src="/logo.webp" 
+                alt="SiteWorks Logo" 
+                className="h-12 w-auto"
+              />
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Verifying Reset Link</h2>
-            <p className="text-gray-600">Please wait while we verify your reset link...</p>
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              Verifying Reset Link
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Please wait while we verify your reset link...
+            </p>
           </div>
-          <div className="bg-white py-10 px-8 shadow-xl rounded-xl border border-gray-200">
+          <div className="bg-white py-8 px-6 shadow rounded-lg">
             <div className="flex justify-center">
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative">
@@ -137,25 +163,25 @@ const ResetPasswordPage: React.FC = () => {
 
   if (isValidToken === false) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="flex items-center justify-center mb-8">
-              <div className="bg-red-600 p-3 rounded-full mr-4">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <h1 className="text-2xl font-bold text-gray-900">SiteWorks</h1>
-                <p className="text-sm text-gray-600">A WEBSITE THAT WORKS FOR YOU!</p>
-              </div>
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <img 
+                src="/logo.webp" 
+                alt="SiteWorks Logo" 
+                className="h-12 w-auto"
+              />
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Invalid Reset Link</h2>
-            <p className="text-gray-600">The reset link you're trying to use is not valid.</p>
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              Invalid Reset Link
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              The reset link you&apos;re trying to use is not valid.
+            </p>
           </div>
-          <div className="bg-white py-10 px-8 shadow-xl rounded-xl border border-gray-200">
-            <div className="p-4 rounded-lg border-l-4 border-red-500 bg-red-50 mb-6">
+          <div className="bg-white py-8 px-6 shadow rounded-lg">
+            <div className="p-4 rounded-md border border-red-200 bg-red-50 mb-6">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,15 +189,15 @@ const ResetPasswordPage: React.FC = () => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-red-700 font-medium">{displayError}</p>
+                  <p className="text-sm font-medium text-red-700">{displayError}</p>
                 </div>
               </div>
             </div>
             <div className="space-y-4">
-              <Link href="/forgot-password" className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
+              <Link href="/forgot-password" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
                 Request New Reset Link
               </Link>
-              <Link href="/sign-in" className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
+              <Link href="/sign-in" className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
                 Back to Sign In
               </Link>
             </div>
@@ -182,89 +208,245 @@ const ResetPasswordPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Header */}
         <div className="text-center">
-          <div className="flex items-center justify-center mb-8">
-            <div className="bg-gray-800 p-3 rounded-full mr-4">
-              <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <div className="text-left">
-              <h1 className="text-2xl font-bold text-gray-900">SiteWorks</h1>
-              <p className="text-sm text-gray-600">A WEBSITE THAT WORKS FOR YOU!</p>
-            </div>
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <img 
+              src="/logo.webp" 
+              alt="SiteWorks Logo" 
+              className="h-12 w-auto"
+            />
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Reset Your Password</h2>
+          
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Reset Your Password
+          </h2>
           {customerInfo && (
-            <p className="text-gray-600 text-sm">
+            <p className="mt-2 text-sm text-gray-600">
               Reset password for <span className="font-medium text-gray-900">{customerInfo.email}</span>
             </p>
           )}
         </div>
 
-        <div className="bg-white py-10 px-8 shadow-xl rounded-xl border border-gray-200">
+        {/* Form Content */}
+        <div className="bg-white py-8 px-6 shadow rounded-lg">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* New Password Field */}
             <div>
-              <Label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                New Password
+              <Label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                Create Password
               </Label>
-              <Input
-                id="newPassword"
-                type="password"
-                {...register('newPassword', {
-                  required: 'New password is required',
-                  minLength: { value: 8, message: 'Password must be at least 8 characters' },
-                  pattern: {
-                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-                    message: 'Password must contain uppercase, lowercase, number, and special character',
-                  },
-                })}
-                placeholder="Enter your new password"
-                disabled={isFormLoading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200"
-              />
+              <div className="mt-1 relative">
+                <Input
+                  id="newPassword"
+                  type={showPassword ? "text" : "password"}
+                  {...register('newPassword', {
+                    required: 'New password is required',
+                    minLength: { value: 8, message: 'Password must be at least 8 characters' },
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                      message: 'Password must contain uppercase, lowercase, number, and special character',
+                    },
+                  })}
+                  placeholder="Enter your password"
+                  disabled={isFormLoading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showPassword ? (
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                      />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {errors.newPassword && (
-                <p className="mt-2 text-sm text-red-600 flex items-center">
-                  <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  {errors.newPassword.message}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{errors.newPassword.message}</p>
+              )}
+
+              {/* Password Strength Indicator */}
+              {watchedPassword && (
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1">
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <div
+                          key={level}
+                          className={`h-2 w-8 rounded-full ${
+                            level <= passwordStrength.strength ? passwordStrength.color : "bg-gray-200"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-600">{passwordStrength.label}</span>
+                  </div>
+                </div>
               )}
             </div>
 
+            {/* Confirm Password Field */}
             <div>
-              <Label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm New Password
+              <Label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirm Password
               </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                {...register('confirmPassword', {
-                  required: 'Please confirm your password',
-                  validate: (value) => {
-                    const password = watch('newPassword');
-                    return value === password || 'Passwords do not match';
-                  },
-                })}
-                placeholder="Confirm your new password"
-                disabled={isFormLoading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200"
-              />
+              <div className="mt-1 relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register('confirmPassword', {
+                    required: 'Please confirm your password',
+                    validate: (value) => {
+                      const password = watch('newPassword');
+                      return value === password || 'Passwords do not match';
+                    },
+                  })}
+                  placeholder="Confirm your password"
+                  disabled={isFormLoading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showConfirmPassword ? (
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                      />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
-                <p className="mt-2 text-sm text-red-600 flex items-center">
-                  <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  {errors.confirmPassword.message}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
               )}
             </div>
 
+            {/* Password Requirements */}
+            <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</h4>
+              <ul className="text-xs text-gray-600 space-y-1">
+                <li className={`flex ${watchedPassword.length >= 8 ? "font-bold" : "font-medium"} items-center`}>
+                  <svg
+                    className={`h-4 w-4 mr-2 ${watchedPassword.length >= 8 ? "text-gray-800" : "text-gray-400"}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  At least 8 characters
+                </li>
+                <li className={`flex ${/[a-z]/.test(watchedPassword) ? "font-bold" : "font-medium"} items-center`}>
+                  <svg
+                    className={`h-4 w-4 mr-2 ${/[a-z]/.test(watchedPassword) ? "text-gray-800" : "text-gray-400"}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  One lowercase letter
+                </li>
+                <li className={`flex ${/[A-Z]/.test(watchedPassword) ? "font-bold" : "font-medium"} items-center`}>
+                  <svg
+                    className={`h-4 w-4 mr-2 ${/[A-Z]/.test(watchedPassword) ? "text-gray-800" : "text-gray-400"}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  One uppercase letter
+                </li>
+                <li className={`flex ${/\d/.test(watchedPassword) ? "font-bold" : "font-medium"} items-center`}>
+                  <svg
+                    className={`h-4 w-4 mr-2 ${/\d/.test(watchedPassword) ? "text-gray-800" : "text-gray-400"}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  One number
+                </li>
+                <li className={`flex ${/[@$!%*?&]/.test(watchedPassword) ? "font-bold" : "font-medium"} items-center`}>
+                  <svg
+                    className={`h-4 w-4 mr-2 ${/[@$!%*?&]/.test(watchedPassword) ? "text-gray-800" : "text-gray-400"}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  One special character (@$!%*?&)
+                </li>
+              </ul>
+            </div>
+
+            {/* Error Display */}
             {displayError && (
-              <div className="p-4 rounded-lg border-l-4 border-red-500 bg-red-50">
+              <div className="p-4 rounded-md border border-red-200 bg-red-50">
                 <div className="flex">
                   <div className="flex-shrink-0">
                     <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,30 +454,34 @@ const ResetPasswordPage: React.FC = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-red-700 font-medium">{displayError}</p>
+                    <p className="text-sm font-medium text-red-700">{displayError}</p>
                   </div>
                 </div>
               </div>
             )}
 
-            <Button
-              type="submit"
-              disabled={isFormLoading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-              {isFormLoading ? (
-                <div className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Resetting Password...
-                </div>
-              ) : (
-                'Reset Password'
-              )}
-            </Button>
+            {/* Submit Button */}
+            <div>
+              <Button
+                type="submit"
+                disabled={isFormLoading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isFormLoading ? (
+                  <div className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Resetting Password...
+                  </div>
+                ) : (
+                  'Reset Password'
+                )}
+              </Button>
+            </div>
 
+            {/* Back to Sign In Link */}
             <div className="text-center pt-4">
               <Link href="/sign-in" className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium">
                 ← Back to Sign In
