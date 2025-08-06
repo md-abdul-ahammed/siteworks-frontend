@@ -30,26 +30,8 @@ export const useMultiStepForm = () => {
   const watchedValues = watch();
 
   const nextStep = useCallback(async () => {
-    // If we're on the final step, handle submission
-    if (currentStep === FORM_CONSTANTS.STEPS.PASSWORD) {
-      // For final step, validate and submit
-      const isFormValid = await trigger();
-      
-      if (!isFormValid) {
-        setHasAttemptedSubmit(true);
-        return;
-      }
-      
-      // If valid, proceed with submission
-      try {
-        const formData = getValues();
-        toast.success('Customer details submitted successfully!');
-      } catch (error) {
-        console.error('Form submission error:', error);
-        toast.error('Failed to submit form. Please try again.');
-      }
-      return;
-    }
+    // Don't auto-submit on BANK_DETAILS step - let the form handle submission
+    // This is just for navigation between steps
     
     // Special handling for email verification step
     if (currentStep === FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION) {
@@ -100,12 +82,20 @@ export const useMultiStepForm = () => {
       isValid = await trigger(['firstName', 'lastName', 'phone']);
     } else if (currentStep === FORM_CONSTANTS.STEPS.ADDRESS) {
       isValid = await trigger(['countryOfResidence', 'address']);
-    } else if (currentStep === FORM_CONSTANTS.STEPS.BANK_DETAILS) {
-      isValid = await trigger(['accountHolderName', 'bankCode', 'accountNumber', 'accountType', 'preferredCurrency']);
+    } else if (currentStep === FORM_CONSTANTS.STEPS.PASSWORD) {
+      isValid = await trigger(['password', 'confirmPassword']);
+    }
+    
+    // For BANK_DETAILS step, don't validate - let user navigate freely
+    if (currentStep === FORM_CONSTANTS.STEPS.BANK_DETAILS) {
+      // Allow navigation to next step without validation
+      setHasAttemptedSubmit(false);
+      setCurrentStep(prev => prev + 1);
+      return;
     }
     
     if (isValid && currentStep < FORM_CONSTANTS.TOTAL_STEPS) {
-      // Reset hasAttemptedSubmit when moving to next step (but not on final step)
+      // Reset hasAttemptedSubmit when moving to next step
       setHasAttemptedSubmit(false);
       setCurrentStep(prev => prev + 1);
     } else {
@@ -142,7 +132,7 @@ export const useMultiStepForm = () => {
     const currentStepErrors: Partial<typeof errors> = {};
     
     // If we're on the final step and trying to submit, show all errors
-    if (currentStep === FORM_CONSTANTS.STEPS.PASSWORD) {
+    if (currentStep === FORM_CONSTANTS.STEPS.BANK_DETAILS) {
       // Show all errors when submitting the final form
       return errors;
     }
@@ -158,6 +148,9 @@ export const useMultiStepForm = () => {
     } else if (currentStep === FORM_CONSTANTS.STEPS.ADDRESS) {
       if (errors.countryOfResidence) currentStepErrors.countryOfResidence = errors.countryOfResidence;
       if (errors.address) currentStepErrors.address = errors.address;
+    } else if (currentStep === FORM_CONSTANTS.STEPS.PASSWORD) {
+      if (errors.password) currentStepErrors.password = errors.password;
+      if (errors.confirmPassword) currentStepErrors.confirmPassword = errors.confirmPassword;
     } else if (currentStep === FORM_CONSTANTS.STEPS.BANK_DETAILS) {
       if (errors.accountHolderName) currentStepErrors.accountHolderName = errors.accountHolderName;
       if (errors.bankCode) currentStepErrors.bankCode = errors.bankCode;

@@ -89,7 +89,7 @@ const CustomerDetailsForm: React.FC = () => {
       
       // Mark GoCardless as completed
       if (formData.accountHolderName && formData.bankCode && formData.accountNumber) {
-        setGoCardlessProgress({ stage: 'completed', message: 'GoCardless setup completed successfully!' });
+        setGoCardlessProgress({ stage: 'completed', message: 'GoCardless Direct Debit setup completed successfully! Your bank account is now linked.' });
       }
       
       // If successful, the AuthContext will handle redirect to dashboard
@@ -97,7 +97,7 @@ const CustomerDetailsForm: React.FC = () => {
       
     } catch (error) {
       console.error('Registration error:', error);
-      setGoCardlessProgress({ stage: 'failed', message: 'GoCardless setup failed, but account was created.' });
+      setGoCardlessProgress({ stage: 'failed', message: 'GoCardless setup failed, but your account was created successfully. You can complete the setup later in your dashboard.' });
       // Error handling is done in AuthContext
     } finally {
       setIsSubmitting(false);
@@ -128,10 +128,18 @@ const CustomerDetailsForm: React.FC = () => {
         return <PersonalInfoStep register={register} errors={errors} watch={watch} setValue={setValue} />;
       case FORM_CONSTANTS.STEPS.ADDRESS:
         return <AddressStep register={register} errors={errors} watch={watch} setValue={setValue} />;
-      case FORM_CONSTANTS.STEPS.BANK_DETAILS:
-        return <BankDetailsStep register={register} errors={errors} watch={watch} setValue={setValue} control={control} />;
       case FORM_CONSTANTS.STEPS.PASSWORD:
         return <PasswordSetupStep register={register} errors={errors} watch={watch} setValue={setValue} />;
+      case FORM_CONSTANTS.STEPS.BANK_DETAILS:
+        return <BankDetailsStep 
+          register={register} 
+          errors={errors} 
+          watch={watch} 
+          setValue={setValue} 
+          control={control}
+          onSubmit={handleFormCompletion}
+          isSubmitting={isSubmitting || isLoading}
+        />;
       default:
         return null;
     }
@@ -281,7 +289,7 @@ const CustomerDetailsForm: React.FC = () => {
           <NavigationButtons
             currentStep={currentStep}
             totalSteps={totalSteps}
-            onNext={currentStep === FORM_CONSTANTS.STEPS.PASSWORD ? handleFormCompletion : nextStep}
+            onNext={nextStep}
             onPrevious={prevStep}
             isNextDisabled={
               (currentStep === FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION && !isEmailVerified) ||

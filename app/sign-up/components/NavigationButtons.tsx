@@ -31,7 +31,7 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
           </Button>
         )}
         
-        {currentStep < totalSteps ? (
+        {currentStep < totalSteps && currentStep !== 5 ? (
           <Button
             type="button"
             onClick={onNext}
@@ -40,16 +40,7 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
           >
             {isSubmitting ? 'Loading...' : 'Next'}
           </Button>
-        ) : (
-          <Button
-            type="submit"
-            onClick={onNext}
-            disabled={isSubmitting}
-            className="ml-auto"
-          >
-            {isSubmitting ? 'Creating Account...' : 'Submit'}
-          </Button>
-        )}
+        ) : null}
       </div>
     </div>
   );
