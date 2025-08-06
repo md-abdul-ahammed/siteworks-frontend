@@ -23,12 +23,7 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
   const firstName = watch?.('firstName') || '';
   const lastName = watch?.('lastName') || '';
 
-  // State for GoCardless integration status
-  const [goCardlessStatus, setGoCardlessStatus] = useState<{
-    isValid: boolean;
-    message: string;
-    type: 'info' | 'success' | 'warning' | 'error';
-  }>({ isValid: false, message: '', type: 'info' });
+
 
   // State for real-time validation
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -77,46 +72,7 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
     }
   }, [firstName, lastName, accountHolderName, setValue]);
 
-  // Validate GoCardless requirements
-  useEffect(() => {
-    const validateGoCardlessData = () => {
-      if (!accountHolderName || !bankCode || !accountNumber || !accountType || !preferredCurrency) {
-        setGoCardlessStatus({
-          isValid: false,
-          message: 'Complete all bank details to enable GoCardless Direct Debit setup',
-          type: 'info'
-        });
-        return;
-      }
 
-      // Basic validation for bank details format
-      if (bankCode.length < 3 || bankCode.length > 20) {
-        setGoCardlessStatus({
-          isValid: false,
-          message: 'Routing number must be between 3-20 digits',
-          type: 'error'
-        });
-        return;
-      }
-
-      if (accountNumber.length < 8 || accountNumber.length > 20) {
-        setGoCardlessStatus({
-          isValid: false,
-          message: 'Account number must be between 8-20 digits',
-          type: 'error'
-        });
-        return;
-      }
-
-      setGoCardlessStatus({
-        isValid: true,
-        message: 'Bank details are valid for GoCardless Direct Debit setup',
-        type: 'success'
-      });
-    };
-
-    validateGoCardlessData();
-  }, [accountHolderName, bankCode, accountNumber, accountType, preferredCurrency]);
 
   // Helper function to validate input as user types
   const validateNumericInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -134,12 +90,12 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
       <h3 className="text-lg font-medium text-gray-900 mb-6">Your bank details</h3>
       
       {/* Last step notice */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+      <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
         <div className="flex items-start">
-          <svg className="h-5 w-5 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="h-5 w-5 text-gray-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
-          <div className="text-sm text-blue-800">
+          <div className="text-sm text-gray-800">
             <p className="font-medium">Final Step - Bank Details</p>
             <p className="mt-1">This is the last step. Please ensure all bank details are correct before proceeding. Any validation errors will prevent account creation.</p>
           </div>
@@ -201,14 +157,14 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
                 <p className="text-xs text-red-600">{errors.bankCode.message}</p>
               )}
               {isValidating && (
-                <p className="text-xs text-blue-600">Validating...</p>
+                <p className="text-xs text-gray-600">Validating...</p>
               )}
             </div>
             {/* Real-time validation feedback */}
             {validationResult && !isValidating && (
               <div className="mt-2">
                 {validationResult.fieldValidation.bankCode ? (
-                  <p className="text-xs text-green-600">✓ Valid bank code format</p>
+                  <p className="text-xs text-gray-600">✓ Valid bank code format</p>
                 ) : (
                   <p className="text-xs text-red-600">✗ {validationResult.suggestions.bankCodeHelp}</p>
                 )}
@@ -245,14 +201,14 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
                 <p className="text-xs text-red-600">{errors.accountNumber.message}</p>
               )}
               {isValidating && (
-                <p className="text-xs text-blue-600">Validating...</p>
+                <p className="text-xs text-gray-600">Validating...</p>
               )}
             </div>
             {/* Real-time validation feedback */}
             {validationResult && !isValidating && (
               <div className="mt-2">
                 {validationResult.fieldValidation.accountNumber ? (
-                  <p className="text-xs text-green-600">✓ Valid account number format</p>
+                  <p className="text-xs text-gray-600">✓ Valid account number format</p>
                 ) : (
                   <p className="text-xs text-red-600">✗ {validationResult.suggestions.accountNumberHelp}</p>
                 )}
@@ -319,80 +275,7 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
           )}
         </div>
 
-        {/* GoCardless Status Indicator */}
-        <div className={`border rounded-md p-3 ${
-          goCardlessStatus.type === 'success' ? 'bg-green-50 border-green-200' :
-          goCardlessStatus.type === 'error' ? 'bg-red-50 border-red-200' :
-          goCardlessStatus.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
-          'bg-blue-50 border-blue-200'
-        }`}>
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              {goCardlessStatus.type === 'success' && (
-                <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              )}
-              {goCardlessStatus.type === 'error' && (
-                <svg className="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              )}
-              {goCardlessStatus.type === 'warning' && (
-                <svg className="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              )}
-              {goCardlessStatus.type === 'info' && (
-                <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-              )}
-            </div>
-            <div className="ml-3">
-              <p className={`text-sm font-medium ${
-                goCardlessStatus.type === 'success' ? 'text-green-800' :
-                goCardlessStatus.type === 'error' ? 'text-red-800' :
-                goCardlessStatus.type === 'warning' ? 'text-yellow-800' :
-                'text-blue-800'
-              }`}>
-                GoCardless Direct Debit Setup
-              </p>
-              <p className={`text-sm mt-1 ${
-                goCardlessStatus.type === 'success' ? 'text-green-700' :
-                goCardlessStatus.type === 'error' ? 'text-red-700' :
-                goCardlessStatus.type === 'warning' ? 'text-yellow-700' :
-                'text-blue-700'
-              }`}>
-                {goCardlessStatus.message}
-              </p>
-              {goCardlessStatus.isValid && (
-                <p className="text-xs text-green-600 mt-2">
-                  ✓ Your bank details will be securely processed by GoCardless to set up Direct Debit authorization during registration.
-                </p>
-              )}
-              {/* Real-time validation summary */}
-              {validationResult && !isValidating && (
-                <div className="mt-2">
-                  {validationResult.isValid ? (
-                    <p className="text-xs text-green-600">
-                      ✓ All bank details are valid for your country ({validationResult.suggestions.note})
-                    </p>
-                  ) : (
-                    <div className="text-xs text-red-600">
-                      <p>✗ Please fix the following issues:</p>
-                      <ul className="mt-1 list-disc list-inside space-y-1">
-                        {validationResult.errors.map((error, index) => (
-                          <li key={index}>{error}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+
 
         {/* Validation Summary */}
         {(errors.accountHolderName || errors.bankCode || errors.accountNumber || errors.accountType || errors.preferredCurrency || (validationResult && !validationResult.isValid)) && (
@@ -430,15 +313,15 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
 
       {/* Submit Button for Final Step */}
       {onSubmit && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
+        <div className="mt-6 border-gray-200">
           <button
             type="button"
             onClick={onSubmit}
-            disabled={isSubmitting || !goCardlessStatus.isValid}
+            disabled={isSubmitting}
             className={`w-full py-3 px-4 rounded-md text-white font-medium transition-colors duration-200 ${
-              isSubmitting || !goCardlessStatus.isValid
+              isSubmitting
                 ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-gray-600 hover:bg-gray-700'
             }`}
           >
             {isSubmitting ? (
@@ -450,9 +333,7 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
               'Complete Registration'
             )}
           </button>
-          <p className="text-xs text-gray-500 mt-2 text-center">
-            By clicking &ldquo;Complete Registration&rdquo;, you agree to our terms and authorize GoCardless to set up Direct Debit.
-          </p>
+          
         </div>
       )}
     </div>

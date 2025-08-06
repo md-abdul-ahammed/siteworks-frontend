@@ -210,11 +210,11 @@ const CustomerDetailsForm: React.FC = () => {
           {/* GoCardless Progress Indicator */}
           {goCardlessProgress.stage !== 'idle' && (
             <div className="mt-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     {goCardlessProgress.stage === 'completed' ? (
-                      <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
                     ) : goCardlessProgress.stage === 'failed' ? (
@@ -223,7 +223,7 @@ const CustomerDetailsForm: React.FC = () => {
                       </svg>
                     ) : (
                       <div className="animate-spin h-5 w-5">
-                        <svg className="text-blue-600" fill="none" viewBox="0 0 24 24">
+                        <svg className="text-gray-600" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -232,16 +232,16 @@ const CustomerDetailsForm: React.FC = () => {
                   </div>
                   <div className="ml-3">
                     <p className={`text-sm font-medium ${
-                      goCardlessProgress.stage === 'completed' ? 'text-green-800' :
+                      goCardlessProgress.stage === 'completed' ? 'text-gray-800' :
                       goCardlessProgress.stage === 'failed' ? 'text-red-800' :
-                      'text-blue-800'
+                      'text-gray-800'
                     }`}>
                       GoCardless Direct Debit Setup
                     </p>
                     <p className={`text-sm mt-1 ${
-                      goCardlessProgress.stage === 'completed' ? 'text-green-700' :
+                      goCardlessProgress.stage === 'completed' ? 'text-gray-700' :
                       goCardlessProgress.stage === 'failed' ? 'text-red-700' :
-                      'text-blue-700'
+                      'text-gray-700'
                     }`}>
                       {goCardlessProgress.message}
                     </p>
@@ -251,28 +251,28 @@ const CustomerDetailsForm: React.FC = () => {
                       <div className="mt-3">
                         <div className="flex items-center space-x-2 text-xs">
                           <div className={`flex items-center ${
-                            ['creating_customer', 'creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'text-blue-600' : 'text-gray-400'
+                            ['creating_customer', 'creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'text-gray-600' : 'text-gray-400'
                           }`}>
                             <div className={`w-2 h-2 rounded-full mr-1 ${
-                              goCardlessProgress.stage === 'creating_customer' ? 'bg-blue-600 animate-pulse' :
-                              ['creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'bg-blue-600' : 'bg-gray-300'
+                              goCardlessProgress.stage === 'creating_customer' ? 'bg-gray-600 animate-pulse' :
+                              ['creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'bg-gray-600' : 'bg-gray-300'
                             }`}></div>
                             Customer
                           </div>
                           <div className={`flex items-center ${
-                            ['creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'text-blue-600' : 'text-gray-400'
+                            ['creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'text-gray-600' : 'text-gray-400'
                           }`}>
                             <div className={`w-2 h-2 rounded-full mr-1 ${
-                              goCardlessProgress.stage === 'creating_bank_account' ? 'bg-blue-600 animate-pulse' :
-                              goCardlessProgress.stage === 'creating_mandate' ? 'bg-blue-600' : 'bg-gray-300'
+                              goCardlessProgress.stage === 'creating_bank_account' ? 'bg-gray-600 animate-pulse' :
+                              goCardlessProgress.stage === 'creating_mandate' ? 'bg-gray-600' : 'bg-gray-300'
                             }`}></div>
                             Bank Account
                           </div>
                           <div className={`flex items-center ${
-                            goCardlessProgress.stage === 'creating_mandate' ? 'text-blue-600' : 'text-gray-400'
+                            goCardlessProgress.stage === 'creating_mandate' ? 'text-gray-600' : 'text-gray-400'
                           }`}>
                             <div className={`w-2 h-2 rounded-full mr-1 ${
-                              goCardlessProgress.stage === 'creating_mandate' ? 'bg-blue-600 animate-pulse' : 'bg-gray-300'
+                              goCardlessProgress.stage === 'creating_mandate' ? 'bg-gray-600 animate-pulse' : 'bg-gray-300'
                             }`}></div>
                             Mandate
                           </div>

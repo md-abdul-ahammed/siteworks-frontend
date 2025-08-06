@@ -147,7 +147,7 @@ class AuthService {
     try {
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for registration
       
 
       
@@ -189,7 +189,7 @@ class AuthService {
         // Handle timeout
         if (error.name === 'AbortError') {
           throw {
-            error: 'Request timeout. Please try again.',
+            error: 'Registration is taking longer than expected. Please wait a moment and try again.',
             code: 'TIMEOUT_ERROR',
           } as ApiError;
         }
