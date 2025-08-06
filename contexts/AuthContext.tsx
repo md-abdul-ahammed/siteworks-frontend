@@ -134,6 +134,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setError('Request timeout. Please try again.');
           toast.error('Request timeout. Please try again.');
           break;
+        case 'GOCARDLESS_SETUP_FAILED':
+          setError('GoCardless Direct Debit setup failed. Your account was created successfully, but you may need to set up Direct Debit later.');
+          toast.error('GoCardless setup failed, but your account was created. You can set up Direct Debit in your dashboard.');
+          break;
+        case 'GOCARDLESS_CUSTOMER_FAILED':
+          setError('Failed to create GoCardless customer. Please check your bank details and try again.');
+          toast.error('Failed to create GoCardless customer. Please verify your bank details.');
+          break;
+        case 'GOCARDLESS_BANK_ACCOUNT_FAILED':
+          setError('Invalid bank account details. Please check your routing number and account number.');
+          toast.error('Invalid bank account details. Please verify your routing and account numbers.');
+          break;
+        case 'GOCARDLESS_MANDATE_FAILED':
+          setError('Failed to create Direct Debit mandate. Your account was created, but Direct Debit setup needs to be completed later.');
+          toast.error('Direct Debit mandate creation failed. You can complete this in your dashboard.');
+          break;
         default:
           const errorMsg = apiError.error || 'An unexpected error occurred. Please try again.';
           setError(errorMsg);
@@ -222,13 +238,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.signUpCustomer(customerData);
       setUser(response.customer); // Backend returns 'customer' not 'user'
       
-      toast.success('Customer account created successfully!', {
-        style: {
-          backgroundColor: '#6b7280',
-          color: 'white',
-          border: '1px solid #4b5563'
-        }
-      });
+      // Check GoCardless status and show appropriate success message
+      const customer = response.customer;
+      if (customer.goCardlessCustomerId && customer.goCardlessBankAccountId && customer.goCardlessMandateId) {
+        // Full GoCardless setup successful
+        toast.success('Account created successfully! Direct Debit has been set up.', {
+          style: {
+            backgroundColor: '#10b981',
+            color: 'white',
+            border: '1px solid #059669'
+          }
+        });
+      } else if (customerData.accountHolderName || customerData.bankCode || customerData.accountNumber) {
+        // Bank details were provided but GoCardless setup failed
+        toast.success('Account created successfully! Direct Debit setup will be completed later.', {
+          style: {
+            backgroundColor: '#f59e0b',
+            color: 'white',
+            border: '1px solid #d97706'
+          }
+        });
+      } else {
+        // No bank details provided
+        toast.success('Account created successfully! You can set up Direct Debit in your dashboard.', {
+          style: {
+            backgroundColor: '#6b7280',
+            color: 'white',
+            border: '1px solid #4b5563'
+          }
+        });
+      }
       
       // Wait a bit for state to update before redirecting
       setTimeout(() => {

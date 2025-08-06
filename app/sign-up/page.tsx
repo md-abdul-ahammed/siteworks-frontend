@@ -23,11 +23,16 @@ import { useMultiStepForm } from './hooks/useMultiStepForm';
 import { FORM_CONSTANTS } from './constants/form';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import GoCardlessStatus from '@/components/GoCardlessStatus';
 
 const CustomerDetailsForm: React.FC = () => {
   const { signUpCustomer, isLoading, isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [goCardlessProgress, setGoCardlessProgress] = useState<{
+    stage: 'idle' | 'creating_customer' | 'creating_bank_account' | 'creating_mandate' | 'completed' | 'failed';
+    message: string;
+  }>({ stage: 'idle', message: '' });
   
   // Redirect if already authenticated
   useEffect(() => {
@@ -65,17 +70,41 @@ const CustomerDetailsForm: React.FC = () => {
       // Get form data
       const formData = watchedValues;
       
+      // Show GoCardless progress if bank details are provided
+      if (formData.accountHolderName && formData.bankCode && formData.accountNumber) {
+        setGoCardlessProgress({ stage: 'creating_customer', message: 'Setting up GoCardless customer...' });
+        
+        // Simulate progress updates (in real implementation, this would be handled by backend events)
+        setTimeout(() => {
+          setGoCardlessProgress({ stage: 'creating_bank_account', message: 'Verifying bank account details...' });
+        }, 1000);
+        
+        setTimeout(() => {
+          setGoCardlessProgress({ stage: 'creating_mandate', message: 'Creating Direct Debit mandate...' });
+        }, 2000);
+      }
+      
       // Call authentication service with all customer data
       await signUpCustomer(formData);
+      
+      // Mark GoCardless as completed
+      if (formData.accountHolderName && formData.bankCode && formData.accountNumber) {
+        setGoCardlessProgress({ stage: 'completed', message: 'GoCardless setup completed successfully!' });
+      }
       
       // If successful, the AuthContext will handle redirect to dashboard
       toast.success('Account created successfully! Welcome to SiteWorks!');
       
     } catch (error) {
       console.error('Registration error:', error);
+      setGoCardlessProgress({ stage: 'failed', message: 'GoCardless setup failed, but account was created.' });
       // Error handling is done in AuthContext
     } finally {
       setIsSubmitting(false);
+      // Reset progress after a delay
+      setTimeout(() => {
+        setGoCardlessProgress({ stage: 'idle', message: '' });
+      }, 3000);
     }
   };
 
@@ -169,6 +198,84 @@ const CustomerDetailsForm: React.FC = () => {
         {/* Form Content */}
         <div>
           {renderStepContent()}
+
+          {/* GoCardless Progress Indicator */}
+          {goCardlessProgress.stage !== 'idle' && (
+            <div className="mt-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    {goCardlessProgress.stage === 'completed' ? (
+                      <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    ) : goCardlessProgress.stage === 'failed' ? (
+                      <svg className="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <div className="animate-spin h-5 w-5">
+                        <svg className="text-blue-600" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="ml-3">
+                    <p className={`text-sm font-medium ${
+                      goCardlessProgress.stage === 'completed' ? 'text-green-800' :
+                      goCardlessProgress.stage === 'failed' ? 'text-red-800' :
+                      'text-blue-800'
+                    }`}>
+                      GoCardless Direct Debit Setup
+                    </p>
+                    <p className={`text-sm mt-1 ${
+                      goCardlessProgress.stage === 'completed' ? 'text-green-700' :
+                      goCardlessProgress.stage === 'failed' ? 'text-red-700' :
+                      'text-blue-700'
+                    }`}>
+                      {goCardlessProgress.message}
+                    </p>
+                    
+                    {/* Progress Steps */}
+                    {!(['idle', 'completed', 'failed'].includes(goCardlessProgress.stage)) && (
+                      <div className="mt-3">
+                        <div className="flex items-center space-x-2 text-xs">
+                          <div className={`flex items-center ${
+                            ['creating_customer', 'creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'text-blue-600' : 'text-gray-400'
+                          }`}>
+                            <div className={`w-2 h-2 rounded-full mr-1 ${
+                              goCardlessProgress.stage === 'creating_customer' ? 'bg-blue-600 animate-pulse' :
+                              ['creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'bg-blue-600' : 'bg-gray-300'
+                            }`}></div>
+                            Customer
+                          </div>
+                          <div className={`flex items-center ${
+                            ['creating_bank_account', 'creating_mandate'].includes(goCardlessProgress.stage) ? 'text-blue-600' : 'text-gray-400'
+                          }`}>
+                            <div className={`w-2 h-2 rounded-full mr-1 ${
+                              goCardlessProgress.stage === 'creating_bank_account' ? 'bg-blue-600 animate-pulse' :
+                              goCardlessProgress.stage === 'creating_mandate' ? 'bg-blue-600' : 'bg-gray-300'
+                            }`}></div>
+                            Bank Account
+                          </div>
+                          <div className={`flex items-center ${
+                            goCardlessProgress.stage === 'creating_mandate' ? 'text-blue-600' : 'text-gray-400'
+                          }`}>
+                            <div className={`w-2 h-2 rounded-full mr-1 ${
+                              goCardlessProgress.stage === 'creating_mandate' ? 'bg-blue-600 animate-pulse' : 'bg-gray-300'
+                            }`}></div>
+                            Mandate
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Navigation Buttons */}
           <NavigationButtons

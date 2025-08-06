@@ -19,6 +19,11 @@ export interface User {
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
+  // GoCardless fields
+  goCardlessCustomerId?: string;
+  goCardlessBankAccountId?: string;
+  goCardlessMandateId?: string;
+  mandateStatus?: string;
 }
 
 export interface AuthTokens {
