@@ -4,6 +4,7 @@ import { PhoneInput } from '@/components/ui/phone-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { parsePhoneNumber } from 'libphonenumber-js';
+import { usePhoneValidation } from '@/hooks/usePhoneValidation';
 
 import { FORM_CONSTANTS } from '../constants/form';
 
@@ -48,11 +49,19 @@ const PHONE_TO_ADDRESS_COUNTRY_MAPPING: Record<string, string> = {
 
 const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, setValue }) => {
   const phoneValue = watch ? watch('phone') : '';
+  const { isCheckingUniqueness, uniquenessError, checkPhoneUniqueness, clearUniquenessError } = usePhoneValidation();
 
   const handlePhoneChange = (value: string | undefined) => {
     // Convert undefined to empty string for form validation
     const phoneValue = value || '';
     setValue?.('phone', phoneValue, { shouldValidate: true });
+    
+    // Check phone uniqueness
+    if (phoneValue && phoneValue.trim().length > 0) {
+      checkPhoneUniqueness(phoneValue);
+    } else {
+      clearUniquenessError();
+    }
   };
 
   // Effect to automatically update country based on phone number
@@ -152,7 +161,18 @@ const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, se
         {errors.phone && (
           <p className="text-xs text-red-600">{getPhoneErrorMessage()}</p>
         )}
-        {!errors.phone && phoneValue && (
+        {uniquenessError && (
+          <p className="text-xs text-red-600">{uniquenessError}</p>
+        )}
+        {isCheckingUniqueness && (
+          <p className="text-xs text-gray-600 flex items-center gap-1">
+            <svg className="h-3 w-3 animate-spin" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
+            Checking phone number availability...
+          </p>
+        )}
+        {!errors.phone && !uniquenessError && !isCheckingUniqueness && phoneValue && (
           <p className="text-xs text-gray-600 flex items-center gap-1">
             <svg className="h-3 w-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

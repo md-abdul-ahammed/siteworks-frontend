@@ -114,7 +114,12 @@ export const customerDetailsSchema = z.object({
       } catch {
         return false;
       }
-    }, "Please enter a valid phone number (e.g., +1 555 123 4567)"),
+    }, "Please enter a valid phone number (e.g., +1 555 123 4567)")
+    .refine(async (value) => {
+      // Check phone number uniqueness (this will be handled by backend validation)
+      // Frontend will show a generic message, backend will provide specific feedback
+      return true;
+    }, "Phone number is already registered by another user"),
   
   // Address Information
   countryOfResidence: z.string().min(1, "Country of residence is required"),

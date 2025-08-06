@@ -500,6 +500,20 @@ class AuthService {
     return response.customer;
   }
 
+  // Check if phone number is unique (for frontend validation)
+  async checkPhoneUniqueness(phone: string): Promise<boolean> {
+    try {
+      const response = await this.makeRequest<{ isUnique: boolean }>('/api/auth/check-phone', {
+        method: 'POST',
+        body: JSON.stringify({ phone }),
+      });
+      return response.isUnique;
+    } catch (error) {
+      console.error('Error checking phone uniqueness:', error);
+      return false; // Assume not unique if there's an error
+    }
+  }
+
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     await this.makeRequest('/api/customers/change-password', {
       method: 'PUT',
