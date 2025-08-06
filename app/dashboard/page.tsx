@@ -12,11 +12,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Image from 'next/image';
-import { Edit, Save, X, User, MapPin, Phone, Mail } from 'lucide-react';
+import { Edit, Save, X, User, MapPin, Phone, Mail, Loader2 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
   const { user, logout, updateProfile } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -51,6 +50,9 @@ const DashboardPage: React.FC = () => {
   // Individual field editing states
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState('');
+  
+  // Field-specific loading states
+  const [loadingFields, setLoadingFields] = useState<Set<string>>(new Set());
 
   const handleLogout = async () => {
     await logout();
@@ -63,7 +65,9 @@ const DashboardPage: React.FC = () => {
 
   const saveField = async (field: string) => {
     try {
-      setIsSaving(true);
+      // Set loading state for this specific field
+      setLoadingFields(prev => new Set(prev).add(field));
+      
       const updatedForm = { ...editForm, [field]: tempValue };
       console.log('Sending profile update with data:', updatedForm);
       await updateProfile(updatedForm);
@@ -73,7 +77,12 @@ const DashboardPage: React.FC = () => {
     } catch (error) {
       console.error('Error updating field:', error);
     } finally {
-      setIsSaving(false);
+      // Clear loading state for this specific field
+      setLoadingFields(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(field);
+        return newSet;
+      });
     }
   };
 
@@ -88,6 +97,7 @@ const DashboardPage: React.FC = () => {
 
   const renderEditableField = (field: string, label: string, value: string, icon?: React.ReactNode) => {
     const isEditing = editingField === field;
+    const isLoading = loadingFields.has(field);
     
     return (
       <div
@@ -105,6 +115,7 @@ const DashboardPage: React.FC = () => {
                 onChange={(e) => setTempValue(e.target.value)}
                 className="mt-1 border-gray-300 focus:border-gray-500 focus:ring-gray-500"
                 autoFocus
+                disabled={isLoading}
               />
             ) : (
               <p className="text-gray-900 font-medium truncate">{value || "Not provided"}</p>
@@ -117,16 +128,23 @@ const DashboardPage: React.FC = () => {
               <Button
                 size="sm"
                 onClick={() => saveField(field)}
-                disabled={isSaving}
+                disabled={isLoading}
                 className="bg-gray-700 hover:bg-gray-800 text-white"
               >
-                <Save className="h-4 w-4" />
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    Saving...
+                  </>
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={cancelEditing}
-                disabled={isSaving}
+                disabled={isLoading}
                 className="border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 <X className="h-4 w-4" />
@@ -137,9 +155,14 @@ const DashboardPage: React.FC = () => {
               size="sm"
               variant="ghost"
               onClick={() => startEditing(field, value)}
+              disabled={isLoading}
               className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             >
-              <Edit className="h-4 w-4" />
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Edit className="h-4 w-4" />
+              )}
             </Button>
           )}
         </div>

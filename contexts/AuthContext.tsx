@@ -333,16 +333,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (profileData: Partial<User>): Promise<void> => {
     try {
-      setIsLoading(true);
+      // Don't set global loading state for profile updates
+      // The dashboard handles field-specific loading states
       clearError();
       
       const updatedUser = await authService.updateProfile(profileData);
       setUser(updatedUser);
+      
+      // Show success toast
+      toast.success('Profile updated successfully!', {
+        style: {
+          backgroundColor: '#10b981',
+          color: 'white',
+          border: '1px solid #059669'
+        }
+      });
     } catch (error) {
       handleError(error);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
