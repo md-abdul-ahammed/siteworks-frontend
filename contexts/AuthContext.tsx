@@ -20,6 +20,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   verifyResetToken: (token: string) => Promise<{ email: string; firstName: string; lastName: string }>;
+  getAuthHeaders: () => Record<string, string>;
   error: string | null;
   clearError: () => void;
 }
@@ -139,12 +140,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           toast.error('Request timeout. Please try again.');
           break;
         case 'GOCARDLESS_SETUP_FAILED':
-          setError('GoCardless Direct Debit setup failed. Your account was created successfully, but you may need to set up Direct Debit later.');
-          toast.error('GoCardless setup failed, but your account was created. You can set up Direct Debit in your dashboard.');
+          setError('Direct Debit setup failed. Your account was created successfully, but you may need to set up Direct Debit later.');
+          toast.error('Direct Debit setup failed, but your account was created. You can set up Direct Debit in your dashboard.');
           break;
         case 'GOCARDLESS_CUSTOMER_FAILED':
-          setError('Failed to create GoCardless customer. Please check your bank details and try again.');
-          toast.error('Failed to create GoCardless customer. Please verify your bank details.');
+          setError('Failed to create payment customer. Please check your bank details and try again.');
+          toast.error('Failed to create payment customer. Please verify your bank details.');
           break;
         case 'GOCARDLESS_BANK_ACCOUNT_FAILED':
           setError('Invalid bank account details. Please check your routing number and account number.');
@@ -429,6 +430,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [clearError]);
 
+  const getAuthHeaders = React.useCallback((): Record<string, string> => {
+    return authService.getAuthHeaders();
+  }, []);
+
   // Debug user state changes
   useEffect(() => {
     console.log('👤 User state changed:', user);
@@ -449,6 +454,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     forgotPassword,
     resetPassword,
     verifyResetToken,
+    getAuthHeaders,
     error,
     clearError,
   };

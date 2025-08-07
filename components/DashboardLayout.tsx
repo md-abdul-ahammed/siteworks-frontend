@@ -74,15 +74,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       }`}>
         <div className="flex flex-col h-full">
           {/* Logo and close button */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-orange-500 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">!</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-foreground">SiteWorks</h1>
-                <p className="text-xs text-muted-foreground">A WEBSITE THAT WORKS FOR YOU</p>
-              </div>
+          <div className="flex items-center justify-center p-4 border-b border-border">
+            <div className="flex items-center justify-center">
+              <Image
+                src="/logo.webp"
+                alt="SiteWorks Logo"
+                width={100}
+                height={100}
+                className="w-24 object-contain"
+                priority
+              />
             </div>
             <Button
               variant="ghost"
@@ -103,7 +104,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                   className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       item.current
                         ? 'bg-accent text-accent-foreground'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
@@ -148,16 +149,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-popover-foreground hover:bg-accent">
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-popover-foreground hover:bg-accent">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive hover:bg-accent">
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
@@ -208,16 +199,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                       <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-popover-foreground hover:bg-accent">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-popover-foreground hover:bg-accent">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive hover:bg-accent">
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout

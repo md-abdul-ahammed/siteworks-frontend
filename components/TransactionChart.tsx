@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -18,32 +18,26 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2, PieChart as PieChartIcon, TrendingUp, BarChart3, Activity } from 'lucide-react';
 
-// Sample transaction data for charts
-const monthlyData = [
-  { month: 'Jan', paid: 1200, pending: 300, failed: 50 },
-  { month: 'Feb', paid: 1800, pending: 150, failed: 25 },
-  { month: 'Mar', paid: 2400, pending: 200, failed: 75 },
-  { month: 'Apr', paid: 1600, pending: 400, failed: 100 },
-  { month: 'May', paid: 2200, pending: 250, failed: 30 },
-  { month: 'Jun', paid: 2800, pending: 180, failed: 40 },
-];
-
-const statusData = [
-  { name: 'Paid', value: 12800, color: '#10B981' },
-  { name: 'Pending', value: 1480, color: '#F59E0B' },
-  { name: 'Failed', value: 320, color: '#EF4444' },
-];
-
-const weeklyData = [
-  { day: 'Mon', amount: 420 },
-  { day: 'Tue', amount: 680 },
-  { day: 'Wed', amount: 520 },
-  { day: 'Thu', amount: 890 },
-  { day: 'Fri', amount: 750 },
-  { day: 'Sat', amount: 340 },
-  { day: 'Sun', amount: 280 },
-];
+interface ChartData {
+  monthlyData: Array<{
+    month: string;
+    paid: number;
+    pending: number;
+    failed: number;
+  }>;
+  weeklyData: Array<{
+    day: string;
+    amount: number;
+  }>;
+  statusData: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+}
 
 interface TransactionChartProps {
   type: 'line' | 'area' | 'bar' | 'pie';
@@ -56,12 +50,124 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
   title,
   height = 300,
 }) => {
+  const [chartData, setChartData] = useState<ChartData>({
+    monthlyData: [],
+    weeklyData: [],
+    statusData: []
+  });
+  const [loading, setLoading] = useState(true);
+  const { getAuthHeaders } = useAuth();
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        setLoading(true);
+        
+        const response = await fetch('/api/dashboard/analytics', {
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setChartData(result.data.charts);
+        }
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChartData();
+  }, [getAuthHeaders]);
+
+  // Check if data is empty
+  const isDataEmpty = () => {
+    switch (type) {
+      case 'line':
+      case 'area':
+        return !chartData.monthlyData || chartData.monthlyData.length === 0 || 
+               chartData.monthlyData.every(item => item.paid === 0 && item.pending === 0 && item.failed === 0);
+      case 'bar':
+        return !chartData.weeklyData || chartData.weeklyData.length === 0 || 
+               chartData.weeklyData.every(item => item.amount === 0);
+      case 'pie':
+        return !chartData.statusData || chartData.statusData.length === 0 || 
+               chartData.statusData.every(item => item.value === 0);
+      default:
+        return true;
+    }
+  };
+
+  // Get appropriate icon for empty state
+  const getEmptyStateIcon = () => {
+    switch (type) {
+      case 'line':
+      case 'area':
+        return <TrendingUp className="h-12 w-12 text-muted-foreground" />;
+      case 'bar':
+        return <BarChart3 className="h-12 w-12 text-muted-foreground" />;
+      case 'pie':
+        return <PieChartIcon className="h-12 w-12 text-muted-foreground" />;
+      default:
+        return <Activity className="h-12 w-12 text-muted-foreground" />;
+    }
+  };
+
+  // Get appropriate message for empty state
+  const getEmptyStateMessage = () => {
+    switch (type) {
+      case 'line':
+      case 'area':
+        return 'No transaction data available';
+      case 'bar':
+        return 'No weekly performance data available';
+      case 'pie':
+        return 'No transaction status data available';
+      default:
+        return 'No data available';
+    }
+  };
+
+  const renderEmptyState = () => {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
+        {getEmptyStateIcon()}
+        <h3 className="text-lg font-medium text-card-foreground mt-4 mb-2">
+          {getEmptyStateMessage()}
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-xs">
+          {type === 'pie' 
+            ? 'Transaction status data will appear here once you have billing records.'
+            : 'Chart data will appear here once transactions are available.'
+          }
+        </p>
+      </div>
+    );
+  };
+
   const renderChart = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-full min-h-[300px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    // Show empty state if no data
+    if (isDataEmpty()) {
+      return renderEmptyState();
+    }
+
     switch (type) {
       case 'line':
         return (
           <ResponsiveContainer width="100%" height={height}>
-            <LineChart data={monthlyData}>
+            <LineChart data={chartData.monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="month" 
@@ -107,7 +213,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
       case 'area':
         return (
           <ResponsiveContainer width="100%" height={height}>
-            <AreaChart data={monthlyData}>
+            <AreaChart data={chartData.monthlyData}>
               <defs>
                 <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
@@ -162,7 +268,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
       case 'bar':
         return (
           <ResponsiveContainer width="100%" height={height}>
-            <BarChart data={weeklyData}>
+            <BarChart data={chartData.weeklyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="day" 
@@ -199,7 +305,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
           <ResponsiveContainer width="100%" height={height}>
             <PieChart>
               <Pie
-                data={statusData}
+                data={chartData.statusData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -208,7 +314,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
                 fill="#8884d8"
                 dataKey="value"
               >
-                {statusData.map((entry, index) => (
+                {chartData.statusData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>

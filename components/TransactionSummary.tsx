@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   TrendingUp, 
@@ -11,8 +11,10 @@ import {
   AlertCircle,
   CheckCircle,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Loader2
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SummaryCardProps {
   title: string;
@@ -23,6 +25,7 @@ interface SummaryCardProps {
   icon: React.ReactNode;
   color: string;
   description?: string;
+  loading?: boolean;
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({
@@ -34,6 +37,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   icon,
   color,
   description,
+  loading = false,
 }) => {
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('en-GB', {
@@ -67,17 +71,21 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold text-card-foreground">
-          {formatAmount(amount)}
+          {loading ? (
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          ) : (
+            formatAmount(amount)
+          )}
         </div>
-        {change !== undefined && (
+        {change !== undefined && !loading && (
           <div className={`flex items-center text-xs ${getChangeColor(changeType)} mt-1`}>
             {getChangeIcon(changeType)}
             <span className="ml-1">
-              {changeType === 'increase' ? '+' : ''}{change}% from last month
+              {changeType === 'increase' ? '+' : ''}{Math.abs(change).toFixed(1)}% from last month
             </span>
           </div>
         )}
-        {description && (
+        {description && !loading && (
           <p className="text-xs text-muted-foreground mt-2">{description}</p>
         )}
       </CardContent>
@@ -97,32 +105,60 @@ interface TransactionSummaryProps {
 }
 
 export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) => {
-  // Default data if none provided
-  const defaultData = {
-    totalRevenue: 14600,
-    totalPaid: 12800,
-    totalPending: 1480,
-    totalFailed: 320,
-    monthlyGrowth: 12.5,
-    transactionCount: 156,
-  };
+  const [summaryData, setSummaryData] = useState({
+    totalRevenue: 0,
+    totalPaid: 0,
+    totalPending: 0,
+    totalFailed: 0,
+    monthlyGrowth: 0,
+    transactionCount: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const { getAuthHeaders } = useAuth();
 
-  const summaryData = data || defaultData;
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        
+        const response = await fetch('/api/dashboard/analytics', {
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setSummaryData(result.data.summary);
+        }
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [getAuthHeaders]);
+
+  // Use provided data if available, otherwise use fetched data
+  const finalData = data || summaryData;
 
   const summaryCards = [
     {
       title: 'Total Revenue',
-      amount: summaryData.totalRevenue,
-      change: summaryData.monthlyGrowth,
-      changeType: 'increase' as const,
+      amount: finalData.totalRevenue,
+      change: finalData.monthlyGrowth,
+      changeType: finalData.monthlyGrowth >= 0 ? 'increase' as const : 'decrease' as const,
       icon: <DollarSign className="h-5 w-5 text-blue-400" />,
       color: 'from-blue-500 to-blue-600',
       description: 'All-time revenue generated',
     },
     {
       title: 'Paid Transactions',
-      amount: summaryData.totalPaid,
-      change: 8.2,
+      amount: finalData.totalPaid,
+      change: finalData.transactionCount > 0 ? ((finalData.totalPaid / finalData.totalRevenue) * 100) : 0,
       changeType: 'increase' as const,
       icon: <CheckCircle className="h-5 w-5 text-green-400" />,
       color: 'from-green-500 to-green-600',
@@ -130,8 +166,8 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) 
     },
     {
       title: 'Pending Payments',
-      amount: summaryData.totalPending,
-      change: -15.3,
+      amount: finalData.totalPending,
+      change: finalData.transactionCount > 0 ? ((finalData.totalPending / finalData.totalRevenue) * 100) : 0,
       changeType: 'decrease' as const,
       icon: <Clock className="h-5 w-5 text-yellow-400" />,
       color: 'from-yellow-500 to-yellow-600',
@@ -139,8 +175,8 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) 
     },
     {
       title: 'Failed Transactions',
-      amount: summaryData.totalFailed,
-      change: -22.1,
+      amount: finalData.totalFailed,
+      change: finalData.transactionCount > 0 ? ((finalData.totalFailed / finalData.totalRevenue) * 100) : 0,
       changeType: 'decrease' as const,
       icon: <AlertCircle className="h-5 w-5 text-red-400" />,
       color: 'from-red-500 to-red-600',
@@ -153,7 +189,7 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) 
       {/* Main Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((card, index) => (
-          <SummaryCard key={index} {...card} />
+          <SummaryCard key={index} {...card} loading={loading} />
         ))}
       </div>
 
@@ -170,19 +206,21 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) 
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Total Transactions</span>
                 <span className="text-lg font-semibold text-card-foreground">
-                  {summaryData.transactionCount}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : finalData.transactionCount}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Success Rate</span>
                 <span className="text-lg font-semibold text-green-400">
-                  {((summaryData.totalPaid / summaryData.totalRevenue) * 100).toFixed(1)}%
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                    finalData.totalRevenue > 0 ? ((finalData.totalPaid / finalData.totalRevenue) * 100).toFixed(1) : '0'}%
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Average Transaction</span>
                 <span className="text-lg font-semibold text-card-foreground">
-                  £{(summaryData.totalRevenue / summaryData.transactionCount).toFixed(0)}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                    finalData.transactionCount > 0 ? `£${(finalData.totalRevenue / finalData.transactionCount).toFixed(0)}` : '£0'}
                 </span>
               </div>
             </div>
@@ -202,20 +240,23 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) 
                 <div className="flex items-center text-green-400">
                   <TrendingUp className="h-4 w-4 mr-1" />
                   <span className="text-lg font-semibold">
-                    +{summaryData.monthlyGrowth}%
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                      `${finalData.monthlyGrowth >= 0 ? '+' : ''}${finalData.monthlyGrowth.toFixed(1)}%`}
                   </span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">This Month</span>
                 <span className="text-lg font-semibold text-card-foreground">
-                  £{(summaryData.totalRevenue * 0.15).toFixed(0)}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                    `£${(finalData.totalRevenue * 0.15).toFixed(0)}`}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Projected</span>
                 <span className="text-lg font-semibold text-blue-400">
-                  £{(summaryData.totalRevenue * 1.125).toFixed(0)}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                    `£${(finalData.totalRevenue * 1.125).toFixed(0)}`}
                 </span>
               </div>
             </div>

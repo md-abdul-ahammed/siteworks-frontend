@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Download, FileText, Calendar, CreditCard, Receipt, Eye, Loader2 } from 'lucide-react';
-// import { useAuth } from '@/contexts/AuthContext';
+import { Download, FileText, Calendar, CreditCard, Receipt, Eye, Loader2, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BillingRecord {
   id: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'paid' | 'failed' | 'cancelled';
+  status: 'pending' | 'paid' | 'failed' | 'cancelled' | 'draft';
   description?: string;
   dueDate?: string;
   paidAt?: string;
@@ -22,7 +22,7 @@ interface BillingRecord {
     receipts: number;
   };
   // Zoho-specific fields
-  invoiceNumber?: string;
+  zohoInvoiceId?: string;
   reference?: string;
   customerName?: string;
   customerId?: string;
@@ -66,404 +66,212 @@ interface BillingHistoryData {
   summary: BillingSummary;
 }
 
-// Dummy data for demonstration - Zoho-like structure
-const dummyBillingData: BillingHistoryData = {
-  billingHistory: [
-    {
-      id: 'INV-2024-001',
-      amount: 299.99,
-      currency: 'GBP',
-      status: 'paid',
-      description: 'Monthly Website Hosting - January 2024',
-      dueDate: '2024-01-15T00:00:00Z',
-      paidAt: '2024-01-12T14:30:00Z',
-      createdAt: '2024-01-01T00:00:00Z',
-      // Zoho-specific fields
-      invoiceNumber: 'INV-2024-001',
-      reference: 'HOSTING-JAN-2024',
-      customerName: 'John Smith',
-      customerId: 'CUST-001',
-      balance: 0,
-      total: 299.99,
-      notes: 'Monthly hosting service for website maintenance',
-      terms: 'Payment due on receipt',
-      lineItems: [
-        {
-          name: 'Website Hosting',
-          description: 'Monthly hosting service',
-          quantity: 1,
-          unitPrice: 299.99,
-          taxPercentage: 0,
-          total: 299.99
-        }
-      ],
-      receipts: [
-        {
-          id: 'receipt_001',
-          fileName: 'invoice_INV-2024-001.pdf',
-          fileUrl: '#',
-          isDownloaded: false,
-          createdAt: '2024-01-12T14:30:00Z'
-        }
-      ],
-      _count: { receipts: 1 }
-    },
-    {
-      id: 'INV-2024-002',
-      amount: 149.50,
-      currency: 'GBP',
-      status: 'pending',
-      description: 'Domain Registration Renewal',
-      dueDate: '2024-02-20T00:00:00Z',
-      createdAt: '2024-02-01T00:00:00Z',
-      invoiceNumber: 'INV-2024-002',
-      reference: 'DOMAIN-RENEWAL-2024',
-      customerName: 'John Smith',
-      customerId: 'CUST-001',
-      balance: 149.50,
-      total: 149.50,
-      notes: 'Annual domain registration renewal',
-      terms: 'Payment due within 30 days',
-      lineItems: [
-        {
-          name: 'Domain Registration',
-          description: 'Annual domain renewal for example.com',
-          quantity: 1,
-          unitPrice: 149.50,
-          taxPercentage: 0,
-          total: 149.50
-        }
-      ],
-      receipts: [],
-      _count: { receipts: 0 }
-    },
-    {
-      id: 'INV-2024-003',
-      amount: 599.99,
-      currency: 'GBP',
-      status: 'paid',
-      description: 'Premium Support Package - Q1 2024',
-      dueDate: '2024-03-01T00:00:00Z',
-      paidAt: '2024-02-28T09:15:00Z',
-      createdAt: '2024-02-15T00:00:00Z',
-      invoiceNumber: 'INV-2024-003',
-      reference: 'SUPPORT-Q1-2024',
-      customerName: 'John Smith',
-      customerId: 'CUST-001',
-      balance: 0,
-      total: 599.99,
-      notes: 'Quarterly premium support package including 24/7 assistance',
-      terms: 'Payment due on receipt',
-      lineItems: [
-        {
-          name: 'Premium Support',
-          description: 'Q1 2024 Premium Support Package',
-          quantity: 1,
-          unitPrice: 599.99,
-          taxPercentage: 0,
-          total: 599.99
-        }
-      ],
-      receipts: [
-        {
-          id: 'receipt_002',
-          fileName: 'invoice_INV-2024-003.pdf',
-          fileUrl: '#',
-          isDownloaded: true,
-          createdAt: '2024-02-28T09:15:00Z'
-        },
-        {
-          id: 'receipt_003',
-          fileName: 'support_contract_Q1_2024.pdf',
-          fileUrl: '#',
-          isDownloaded: false,
-          createdAt: '2024-02-28T09:15:00Z'
-        }
-      ],
-      _count: { receipts: 2 }
-    },
-    {
-      id: 'INV-2024-004',
-      amount: 89.99,
-      currency: 'GBP',
-      status: 'failed',
-      description: 'SSL Certificate Renewal',
-      dueDate: '2024-02-10T00:00:00Z',
-      createdAt: '2024-02-01T00:00:00Z',
-      invoiceNumber: 'INV-2024-004',
-      reference: 'SSL-RENEWAL-2024',
-      customerName: 'John Smith',
-      customerId: 'CUST-001',
-      balance: 89.99,
-      total: 89.99,
-      notes: 'SSL certificate renewal for secure website',
-      terms: 'Payment due immediately',
-      lineItems: [
-        {
-          name: 'SSL Certificate',
-          description: 'Annual SSL certificate renewal',
-          quantity: 1,
-          unitPrice: 89.99,
-          taxPercentage: 0,
-          total: 89.99
-        }
-      ],
-      receipts: [],
-      _count: { receipts: 0 }
-    },
-    {
-      id: 'INV-2024-005',
-      amount: 199.99,
-      currency: 'GBP',
-      status: 'paid',
-      description: 'Website Maintenance - February 2024',
-      dueDate: '2024-02-28T00:00:00Z',
-      paidAt: '2024-02-25T16:45:00Z',
-      createdAt: '2024-02-01T00:00:00Z',
-      invoiceNumber: 'INV-2024-005',
-      reference: 'MAINTENANCE-FEB-2024',
-      customerName: 'John Smith',
-      customerId: 'CUST-001',
-      balance: 0,
-      total: 199.99,
-      notes: 'Monthly website maintenance and updates',
-      terms: 'Payment due on receipt',
-      lineItems: [
-        {
-          name: 'Website Maintenance',
-          description: 'February 2024 maintenance service',
-          quantity: 1,
-          unitPrice: 199.99,
-          taxPercentage: 0,
-          total: 199.99
-        }
-      ],
-      receipts: [
-        {
-          id: 'receipt_004',
-          fileName: 'invoice_INV-2024-005.pdf',
-          fileUrl: '#',
-          isDownloaded: false,
-          createdAt: '2024-02-25T16:45:00Z'
-        }
-      ],
-      _count: { receipts: 1 }
-    },
-    {
-      id: 'INV-2024-006',
-      amount: 399.99,
-      currency: 'GBP',
-      status: 'pending',
-      description: 'E-commerce Integration Service',
-      dueDate: '2024-03-15T00:00:00Z',
-      createdAt: '2024-03-01T00:00:00Z',
-      invoiceNumber: 'INV-2024-006',
-      reference: 'ECOMMERCE-INTEGRATION',
-      customerName: 'John Smith',
-      customerId: 'CUST-001',
-      balance: 399.99,
-      total: 399.99,
-      notes: 'E-commerce platform integration and setup',
-      terms: 'Payment due within 15 days',
-      lineItems: [
-        {
-          name: 'E-commerce Integration',
-          description: 'Complete e-commerce platform setup',
-          quantity: 1,
-          unitPrice: 399.99,
-          taxPercentage: 0,
-          total: 399.99
-        }
-      ],
-      receipts: [],
-      _count: { receipts: 0 }
-    },
-    {
-      id: 'INV-2024-007',
-      amount: 129.99,
-      currency: 'GBP',
-      status: 'paid',
-      description: 'SEO Optimization Package',
-      dueDate: '2024-01-31T00:00:00Z',
-      paidAt: '2024-01-29T11:20:00Z',
-      createdAt: '2024-01-15T00:00:00Z',
-      invoiceNumber: 'INV-2024-007',
-      reference: 'SEO-OPTIMIZATION-JAN',
-      customerName: 'John Smith',
-      customerId: 'CUST-001',
-      balance: 0,
-      total: 129.99,
-      notes: 'Search engine optimization services',
-      terms: 'Payment due on receipt',
-      lineItems: [
-        {
-          name: 'SEO Optimization',
-          description: 'January 2024 SEO optimization service',
-          quantity: 1,
-          unitPrice: 129.99,
-          taxPercentage: 0,
-          total: 129.99
-        }
-      ],
-      receipts: [
-        {
-          id: 'receipt_005',
-          fileName: 'invoice_INV-2024-007.pdf',
-          fileUrl: '#',
-          isDownloaded: false,
-          createdAt: '2024-01-29T11:20:00Z'
-        }
-      ],
-      _count: { receipts: 1 }
-    },
-    {
-      id: 'INV-2024-008',
-      amount: 79.99,
-      currency: 'GBP',
-      status: 'cancelled',
-      description: 'Additional Storage Upgrade',
-      dueDate: '2024-02-05T00:00:00Z',
-      createdAt: '2024-02-01T00:00:00Z',
-      invoiceNumber: 'INV-2024-008',
-      reference: 'STORAGE-UPGRADE',
-      customerName: 'John Smith',
-      customerId: 'CUST-001',
-      balance: 0,
-      total: 79.99,
-      notes: 'Additional storage space upgrade (cancelled)',
-      terms: 'Payment due immediately',
-      lineItems: [
-        {
-          name: 'Storage Upgrade',
-          description: 'Additional 100GB storage space',
-          quantity: 1,
-          unitPrice: 79.99,
-          taxPercentage: 0,
-          total: 79.99
-        }
-      ],
-      receipts: [],
-      _count: { receipts: 0 }
-    }
-  ],
-  pagination: {
-    page: 1,
-    limit: 10,
-    total: 8,
-    totalPages: 1
-  },
-  summary: {
-    totalBills: 8,
-    totalAmount: 1758.43,
-    paidAmount: 1129.46,
-    pendingAmount: 628.97
-  }
-};
-
 const BillingHistory: React.FC = () => {
-  // const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders } = useAuth();
   const [billingData, setBillingData] = useState<BillingHistoryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
   const [downloadLoading, setDownloadLoading] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  
+  // Add mounted ref to prevent calls after unmount
+  const isMounted = useRef(true);
+  
+  // Add cache state
+  const [cache, setCache] = useState<{
+    [key: string]: {
+      data: BillingHistoryData;
+      timestamp: number;
+    };
+  }>({});
 
-  const fetchBillingHistory = async (page = 1, status = '') => {
-    try {
-      setLoading(true);
-      
-      // For now, always use dummy data since API endpoint doesn't exist yet
-      console.log('Using dummy data for billing history');
-      const filteredData = filterDummyData(dummyBillingData, status);
-      setBillingData(filteredData);
-      
-      // TODO: Uncomment when API is ready
-      // const params = new URLSearchParams({
-      //   page: page.toString(),
-      //   limit: '10'
-      // });
-      
-      // if (status) {
-      //   params.append('status', status);
-      // }
+  // Cache duration: 5 minutes
+  const CACHE_DURATION = 5 * 60 * 1000;
 
-      // const response = await fetch(`/api/billing/history?${params}`, {
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${authService.getAccessToken()}`
-      //   }
-      // });
+  // Add request deduplication
+  const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
+  
+  // Add debounce timeout ref
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-      // if (!response.ok) {
-      //   throw new Error('Failed to fetch billing history');
-      // }
-
-      // const data = await response.json();
-      // setBillingData(data.data);
-    } catch (error) {
-      console.error('Error fetching billing history:', error);
-      // Use dummy data when API fails
-      console.log('Using dummy data due to API error');
-      const filteredData = filterDummyData(dummyBillingData, status);
-      setBillingData(filteredData);
-    } finally {
-      setLoading(false);
-    }
+  const getCacheKey = (page: number, status: string) => {
+    return `billing-${page}-${status}`;
   };
 
-  const filterDummyData = (data: BillingHistoryData, status: string): BillingHistoryData => {
-    if (!status) {
-      return data;
+  const isCacheValid = (timestamp: number) => {
+    return Date.now() - timestamp < CACHE_DURATION;
+  };
+
+  const fetchBillingHistory = useCallback(async (page = 1, status = '', forceRefresh = false) => {
+    // Check if component is still mounted
+    if (!isMounted.current) return;
+    
+    const cacheKey = getCacheKey(page, status);
+    const cachedData = cache[cacheKey];
+
+    console.log('🔄 Fetching billing history:', { page, status, forceRefresh, cacheKey });
+
+    // Return cached data if valid and not forcing refresh
+    if (!forceRefresh && cachedData && isCacheValid(cachedData.timestamp)) {
+      console.log('✅ Using cached data for:', cacheKey);
+      if (isMounted.current) {
+        setBillingData(cachedData.data);
+        setLoading(false);
+      }
+      return;
     }
 
-    const filteredHistory = data.billingHistory.filter(record => record.status === status);
-    
-    // Recalculate summary based on filtered data
-    const summary = {
-      totalBills: filteredHistory.length,
-      totalAmount: filteredHistory.reduce((sum, record) => sum + record.amount, 0),
-      paidAmount: filteredHistory
-        .filter(record => record.status === 'paid')
-        .reduce((sum, record) => sum + record.amount, 0),
-      pendingAmount: filteredHistory
-        .filter(record => record.status === 'pending')
-        .reduce((sum, record) => sum + record.amount, 0)
-    };
+    // Check if request is already pending
+    if (pendingRequests.has(cacheKey)) {
+      console.log('⏳ Request already pending for:', cacheKey);
+      return;
+    }
 
-    return {
-      ...data,
-      billingHistory: filteredHistory,
-      summary,
-      pagination: {
-        ...data.pagination,
-        total: filteredHistory.length,
-        totalPages: Math.ceil(filteredHistory.length / data.pagination.limit)
+    try {
+      console.log('📡 Making API request for:', cacheKey);
+      if (isMounted.current) {
+        setLoading(true);
       }
-    };
+      setPendingRequests(prev => new Set(prev).add(cacheKey));
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '10'
+      });
+      
+      if (status) {
+        params.append('status', status);
+      }
+
+      const response = await fetch(`/api/billing/history?${params}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch billing history');
+      }
+
+      const data = await response.json();
+      console.log('✅ API response received for:', cacheKey);
+      
+      if (isMounted.current) {
+        setBillingData(data.data);
+      }
+      
+      // Cache the result
+      setCache(prev => ({
+        ...prev,
+        [cacheKey]: {
+          data: data.data,
+          timestamp: Date.now()
+        }
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching billing history:', error);
+      // Show empty state if API fails
+      if (isMounted.current) {
+        setBillingData({
+          billingHistory: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+          summary: { totalBills: 0, totalAmount: 0, paidAmount: 0, pendingAmount: 0 }
+        });
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+      setPendingRequests(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(cacheKey);
+        return newSet;
+      });
+    }
+  }, [getAuthHeaders]);
+
+  const syncBillingData = async () => {
+    try {
+      setSyncing(true);
+      
+      const response = await fetch('/api/billing/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to sync billing data');
+      }
+
+      const result = await response.json();
+      console.log('Sync result:', result);
+      
+      // Clear cache and refresh billing history after sync
+      setCache({});
+      await fetchBillingHistory(currentPage, statusFilter, true);
+      
+    } catch (error) {
+      console.error('Error syncing billing data:', error);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   useEffect(() => {
-    fetchBillingHistory(currentPage, statusFilter);
+    isMounted.current = true; // Set mounted to true when component mounts
+    
+    // Clear any existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    // Debounce the API call
+    debounceTimeoutRef.current = setTimeout(() => {
+      if (isMounted.current) {
+        fetchBillingHistory(currentPage, statusFilter);
+      }
+    }, 300); // 300ms debounce
+    
+    return () => {
+      isMounted.current = false; // Set mounted to false when component unmounts
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
   }, [currentPage, statusFilter]);
 
   const handleDownloadReceipt = async (receipt: Receipt) => {
     try {
       setDownloadLoading(receipt.id);
       
-      // Simulate download delay for dummy data
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/billing/receipts/${receipt.id}/download`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        }
+      });
       
-      // For dummy data, just show a success message
-      console.log(`Downloading receipt: ${receipt.fileName}`);
+      if (!response.ok) {
+        throw new Error('Failed to download receipt');
+      }
+
+      const data = await response.json();
       
-      // TODO: Uncomment when API is ready
-      // const response = await fetch(`/api/billing/receipts/${receipt.id}/download`, {
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${authService.getAccessToken()}`
-      //   }
-      // });
+      // Create a download link for the PDF
+      if (data.data.downloadUrl) {
+        const link = document.createElement('a');
+        link.href = data.data.downloadUrl;
+        link.download = receipt.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
       
     } catch (error) {
       console.error('Error downloading receipt:', error);
@@ -477,7 +285,8 @@ const BillingHistory: React.FC = () => {
       paid: { color: 'bg-green-100 text-green-800', text: 'Paid' },
       pending: { color: 'bg-yellow-100 text-yellow-800', text: 'Pending' },
       failed: { color: 'bg-red-100 text-red-800', text: 'Failed' },
-      cancelled: { color: 'bg-gray-100 text-gray-800', text: 'Cancelled' }
+      cancelled: { color: 'bg-gray-100 text-gray-800', text: 'Cancelled' },
+      draft: { color: 'bg-blue-100 text-blue-800', text: 'Draft' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -490,14 +299,14 @@ const BillingHistory: React.FC = () => {
   };
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency || 'GBP'
+      currency: currency || 'USD'
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -524,6 +333,30 @@ const BillingHistory: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Sync Button */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-card-foreground">Billing History</h2>
+        <Button
+          onClick={syncBillingData}
+          disabled={syncing}
+          variant="outline"
+          size="sm"
+          className="border-border text-card-foreground hover:bg-accent"
+        >
+          {syncing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Syncing...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Sync Billing Data
+            </>
+          )}
+        </Button>
+      </div>
+
       {/* Summary Cards */}
       {billingData && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -542,7 +375,7 @@ const BillingHistory: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-card-foreground">
-                {formatCurrency(billingData.summary.totalAmount, 'GBP')}
+                {formatCurrency(billingData.summary.totalAmount, 'USD')}
               </div>
             </CardContent>
           </Card>
@@ -553,7 +386,7 @@ const BillingHistory: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-400">
-                {formatCurrency(billingData.summary.paidAmount, 'GBP')}
+                {formatCurrency(billingData.summary.paidAmount, 'USD')}
               </div>
             </CardContent>
           </Card>
@@ -564,7 +397,7 @@ const BillingHistory: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-400">
-                {formatCurrency(billingData.summary.pendingAmount, 'GBP')}
+                {formatCurrency(billingData.summary.pendingAmount, 'USD')}
               </div>
             </CardContent>
           </Card>
@@ -601,6 +434,13 @@ const BillingHistory: React.FC = () => {
         >
           Failed
         </Button>
+        <Button
+          variant={statusFilter === 'draft' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setStatusFilter('draft')}
+        >
+          Draft
+        </Button>
       </div>
 
       {/* Billing Records */}
@@ -619,6 +459,7 @@ const BillingHistory: React.FC = () => {
             <div className="text-center py-8 text-muted-foreground">
               <Receipt className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p>No billing records found</p>
+              <p className="text-sm mt-2">Click &quot;Sync Billing Data&quot; to fetch your billing data</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -633,11 +474,11 @@ const BillingHistory: React.FC = () => {
                         <CreditCard className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1">
                           <span className="font-medium text-card-foreground">
-                            {record.description || `Payment ${record.id.slice(-8)}`}
+                            {record.description || `Payment ${record.zohoInvoiceId || record.id.slice(-8)}`}
                           </span>
-                          {record.invoiceNumber && (
+                          {record.zohoInvoiceId && (
                             <span className="text-sm text-muted-foreground ml-2">
-                              #{record.invoiceNumber}
+                              #{record.zohoInvoiceId}
                             </span>
                           )}
                           {record.reference && (
@@ -691,7 +532,9 @@ const BillingHistory: React.FC = () => {
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl bg-popover border-border">
                             <DialogHeader>
-                              <DialogTitle className="text-popover-foreground">Invoice Details - {record.invoiceNumber || record.id}</DialogTitle>
+                              <DialogTitle className="text-popover-foreground">
+                                Invoice Details - {record.zohoInvoiceId || record.id}
+                              </DialogTitle>
                               <DialogDescription className="text-muted-foreground">
                                 View invoice details and download receipts
                               </DialogDescription>

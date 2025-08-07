@@ -535,6 +535,14 @@ class AuthService {
   getAccessToken(): string | null {
     return this.accessToken;
   }
+
+  getAuthHeaders(): Record<string, string> {
+    const token = this.getAccessToken();
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  }
 }
 
 export const authService = AuthService.getInstance(); 
