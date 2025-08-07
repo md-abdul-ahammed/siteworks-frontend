@@ -56,8 +56,8 @@ const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, se
     const phoneValue = value || '';
     setValue?.('phone', phoneValue, { shouldValidate: true });
     
-    // Check phone uniqueness
-    if (phoneValue && phoneValue.trim().length > 0) {
+    // Check phone uniqueness - ensure phoneValue is a string before calling trim
+    if (phoneValue && typeof phoneValue === 'string' && phoneValue.trim().length > 0) {
       checkPhoneUniqueness(phoneValue);
     } else {
       clearUniquenessError();
@@ -66,7 +66,7 @@ const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, se
 
   // Effect to automatically update country based on phone number
   useEffect(() => {
-    if (phoneValue && setValue) {
+    if (phoneValue && typeof phoneValue === 'string' && phoneValue.trim() && setValue) {
       try {
         const parsedPhone = parsePhoneNumber(phoneValue);
         if (parsedPhone && parsedPhone.country) {

@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Edit, Save, X, User, MapPin, Phone, Mail, Loader2 } from 'lucide-react';
+import BillingHistory from '@/components/BillingHistory';
 
 const DashboardPage: React.FC = () => {
   const { user, logout, updateProfile } = useAuth();
@@ -296,7 +297,7 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* Profile Information */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <Card>
               <CardHeader>
                 <CardTitle className="text-gray-900">Personal Information</CardTitle>
@@ -325,6 +326,9 @@ const DashboardPage: React.FC = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Billing History */}
+          <BillingHistory />
         </div>
       </div>
     </ProtectedRoute>
