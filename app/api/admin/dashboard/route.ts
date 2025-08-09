@@ -11,7 +11,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/admin/dashboard`, {
+    // Forward query parameters to backend
+    const searchParams = request.nextUrl.searchParams;
+    const queryString = searchParams.toString();
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/admin/dashboard${queryString ? `?${queryString}` : ''}`;
+
+    const response = await fetch(backendUrl, {
       method: 'GET',
       headers: {
         'Authorization': authHeader,
