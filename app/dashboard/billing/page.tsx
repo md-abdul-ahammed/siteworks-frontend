@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { UserOnlyRoute } from '@/components/UserOnlyRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard } from 'lucide-react';
@@ -16,7 +16,7 @@ const BillingPage: React.FC = () => {
   };
 
   return (
-    <ProtectedRoute useDashboardSkeleton={true}>
+    <UserOnlyRoute useDashboardSkeleton={true}>
       <DashboardLayout>
         {/* Billing Header */}
         <div className="mb-8">
@@ -50,7 +50,7 @@ const BillingPage: React.FC = () => {
 
 
       </DashboardLayout>
-    </ProtectedRoute>
+    </UserOnlyRoute>
   );
 };
 

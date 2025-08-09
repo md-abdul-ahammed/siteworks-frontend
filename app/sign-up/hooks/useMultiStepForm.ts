@@ -1,17 +1,19 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
 import { customerDetailsSchema, CustomerDetailsForm } from '../types/customer';
 import { FORM_CONSTANTS } from '../constants/form';
-import { EmailVerificationStepRef } from '../components';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { authService } from '@/lib/auth';
+import { usePhoneValidation } from '@/hooks/usePhoneValidation';
 
 export const useMultiStepForm = () => {
-  const [currentStep, setCurrentStep] = useState<number>(FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION);
+  const [currentStep, setCurrentStep] = useState<number>(FORM_CONSTANTS.STEPS.PERSONAL_INFO);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const emailVerificationRef = useRef<EmailVerificationStepRef>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const { checkEmailAvailability } = useAuth();
+  const { uniquenessError: phoneUniquenessError, isCheckingUniqueness: isCheckingPhone } = usePhoneValidation();
 
   const form = useForm<CustomerDetailsForm>({
     resolver: zodResolver(customerDetailsSchema),
@@ -33,53 +35,54 @@ export const useMultiStepForm = () => {
     // Don't auto-submit on BANK_DETAILS step - let the form handle submission
     // This is just for navigation between steps
     
-    // Special handling for email verification step
-    if (currentStep === FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION) {
-      // If email is already verified, proceed to next step
-      if (isEmailVerified) {
-        setHasAttemptedSubmit(false);
-        setCurrentStep(prev => prev + 1);
-        return;
-      }
-      
-      // If email is not verified, check if we need to send OTP first
-      if (!isOtpSent && emailVerificationRef.current) {
-        // First validate email
-        const emailValid = await trigger(['email']);
-        
-        if (!emailValid) {
-          setHasAttemptedSubmit(true);
-          return;
-        }
-        
-        try {
-          const otpSent = await emailVerificationRef.current.sendOtp();
-          if (otpSent) {
-            setIsOtpSent(true);
-            // Don't proceed to next step yet, let user enter OTP
-            return;
-          }
-        } catch (error) {
-          console.error('Failed to send OTP:', error);
-          toast.error('Failed to send OTP. Please try again.');
-          return;
-        }
-      }
-      
-      // If OTP has been sent but not verified, show error
-      if (isOtpSent && !isEmailVerified) {
-        toast.error('Please verify your email address before proceeding.');
-        return;
-      }
-      
-      return;
-    }
-    
     // Validate current step before moving to next
     let isValid = false;
     
     if (currentStep === FORM_CONSTANTS.STEPS.PERSONAL_INFO) {
-      isValid = await trigger(['firstName', 'lastName', 'phone']);
+      isValid = await trigger(['email', 'firstName', 'lastName', 'phone']);
+      
+      if (isValid) {
+        // Check email availability
+        const email = watchedValues.email;
+        if (email) {
+          setIsCheckingEmail(true);
+          try {
+            const result = await checkEmailAvailability(email);
+            if (!result.isAvailable) {
+              toast.error(result.error || 'Email is already registered');
+              setHasAttemptedSubmit(true);
+              setIsCheckingEmail(false);
+              return;
+            }
+          } catch (error) {
+            console.error('Email validation error:', error);
+            toast.error('Error checking email availability');
+            setHasAttemptedSubmit(true);
+            setIsCheckingEmail(false);
+            return;
+          } finally {
+            setIsCheckingEmail(false);
+          }
+        }
+        
+        // Check phone uniqueness
+        const phone = watchedValues.phone;
+        if (phone) {
+          try {
+            const isPhoneUnique = await authService.checkPhoneUniqueness(phone);
+            if (!isPhoneUnique) {
+              toast.error('Phone number is already registered');
+              setHasAttemptedSubmit(true);
+              return;
+            }
+          } catch (error) {
+            console.error('Phone validation error:', error);
+            toast.error('Error checking phone availability');
+            setHasAttemptedSubmit(true);
+            return;
+          }
+        }
+      }
     } else if (currentStep === FORM_CONSTANTS.STEPS.ADDRESS) {
       isValid = await trigger(['countryOfResidence', 'address']);
     } else if (currentStep === FORM_CONSTANTS.STEPS.PASSWORD) {
@@ -102,28 +105,15 @@ export const useMultiStepForm = () => {
       // Set hasAttemptedSubmit to true when validation fails
       setHasAttemptedSubmit(true);
     }
-  }, [currentStep, trigger, isOtpSent, isEmailVerified]);
+  }, [currentStep, trigger, watchedValues.email, watchedValues.phone, checkEmailAvailability]);
 
   const prevStep = useCallback(() => {
     if (currentStep > 1) {
       // Reset hasAttemptedSubmit when going back
       setHasAttemptedSubmit(false);
       setCurrentStep(prev => prev - 1);
-      
-      // Don't reset email verification status when going back
-      // This preserves the verification state when navigating back
     }
   }, [currentStep]);
-
-  // Handle OTP sent callback
-  const handleOtpSent = useCallback(() => {
-    setIsOtpSent(true);
-  }, []);
-
-  // Handle email verification success callback
-  const handleVerificationSuccess = useCallback((success: boolean) => {
-    setIsEmailVerified(success);
-  }, []);
 
   // Only show errors for the current step
   const getCurrentStepErrors = () => {
@@ -138,10 +128,8 @@ export const useMultiStepForm = () => {
     }
     
     // Only show errors for the current step, not from previous steps
-    if (currentStep === FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION) {
+    if (currentStep === FORM_CONSTANTS.STEPS.PERSONAL_INFO) {
       if (errors.email) currentStepErrors.email = errors.email;
-      if (errors.otp) currentStepErrors.otp = errors.otp;
-    } else if (currentStep === FORM_CONSTANTS.STEPS.PERSONAL_INFO) {
       if (errors.firstName) currentStepErrors.firstName = errors.firstName;
       if (errors.lastName) currentStepErrors.lastName = errors.lastName;
       if (errors.phone) currentStepErrors.phone = errors.phone;
@@ -174,10 +162,8 @@ export const useMultiStepForm = () => {
     control,
     nextStep,
     prevStep,
-    emailVerificationRef,
-    handleOtpSent,
-    handleVerificationSuccess,
-    isEmailVerified,
-    isOtpSent,
+    isCheckingEmail,
+    isCheckingPhone,
+    phoneUniquenessError,
   };
 };

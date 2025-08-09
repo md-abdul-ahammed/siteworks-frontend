@@ -13,12 +13,6 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
 }) => {
   return (
     <div className="mt-6 space-y-2">
-      {isNextDisabled && currentStep === 1 && (
-        <p className="text-sm text-gray-600">
-          Please verify your email address to continue
-        </p>
-      )}
-      
       <div className="flex justify-between">
         {currentStep > 1 && (
           <Button

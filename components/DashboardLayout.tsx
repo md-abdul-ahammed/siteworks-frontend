@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   LayoutDashboard, 
   User, 
@@ -14,7 +13,7 @@ import {
   LogOut, 
   Menu, 
   X,
-  Home
+  Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -37,41 +36,63 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
   };
 
-  const navigation = [
-    {
-      name: 'Dashboard',
-      href: '/dashboard',
-      icon: LayoutDashboard,
-      current: pathname === '/dashboard',
-    },
-    {
-      name: 'Profile',
-      href: '/dashboard/profile',
-      icon: User,
-      current: pathname === '/dashboard/profile',
-    },
-    {
-      name: 'Billing',
-      href: '/dashboard/billing',
-      icon: CreditCard,
-      current: pathname === '/dashboard/billing',
-    },
-  ];
+  const isAdmin = user?.role === 'admin';
+
+  const navigation = isAdmin
+    ? [
+        {
+          name: 'Dashboard',
+          href: '/dashboard',
+          icon: LayoutDashboard,
+          current: pathname === '/dashboard',
+        },
+        {
+          name: 'Users',
+          href: '/admin',
+          icon: Users,
+          current: pathname === '/admin',
+        },
+        {
+          name: 'Billing',
+          href: '/dashboard/billing',
+          icon: CreditCard,
+          current: pathname === '/dashboard/billing',
+        },
+      ]
+    : [
+        {
+          name: 'Dashboard',
+          href: '/dashboard',
+          icon: LayoutDashboard,
+          current: pathname === '/dashboard',
+        },
+        {
+          name: 'Profile',
+          href: '/dashboard/profile',
+          icon: User,
+          current: pathname === '/dashboard/profile',
+        },
+        {
+          name: 'Billing',
+          href: '/dashboard/billing',
+          icon: CreditCard,
+          current: pathname === '/dashboard/billing',
+        },
+      ];
 
   return (
     <div className="min-h-screen bg-background text-foreground flex dashboard-dark">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-75 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black bg-opacity-75 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-sidebar shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:h-screen ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-sidebar shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:h-screen ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <div className="flex flex-col h-full">
           {/* Logo and close button */}
           <div className="flex items-center justify-center p-4 border-b border-border">
@@ -104,10 +125,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   <Link
                     key={item.name}
                     href={item.href}
-                   className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       item.current
-                        ? 'bg-accent text-accent-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -124,7 +145,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/avatars/01.png" alt={user?.firstName} />
                 <AvatarFallback className="bg-accent text-accent-foreground text-xs">
-                  {getInitials(user?.firstName || '', user?.lastName || '')}
+                  {getInitials(user?.firstName || "", user?.lastName || "")}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
@@ -134,10 +155,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
             </div>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-start text-xs border-border text-foreground hover:bg-accent">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start text-xs border-border text-foreground hover:bg-accent"
+                >
                   <Settings className="h-3 w-3 mr-2" />
                   Account Settings
                 </Button>
@@ -145,7 +170,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               <DropdownMenuContent className="w-56 bg-popover border-border" align="end">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-popover-foreground">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-sm font-medium leading-none text-popover-foreground">
+                      {user?.firstName} {user?.lastName}
+                    </p>
                     <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
@@ -163,7 +190,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top header */}
         <header className="bg-card shadow-sm border-b border-border flex-shrink-0">
-          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-14">
+          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-14 sm:py-0 lg:py-[31px]">
             <div className="flex items-center">
               <Button
                 variant="ghost"
@@ -173,11 +200,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              <div className="ml-4 lg:ml-0">
+              {/* <div className="ml-4 lg:ml-0">
                 <h1 className="text-lg font-semibold text-foreground">
                   {navigation.find(item => item.current)?.name || 'Dashboard'}
                 </h1>
-              </div>
+              </div> */}
             </div>
 
             <div className="flex items-center space-x-3">
@@ -187,7 +214,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     <Avatar className="h-7 w-7">
                       <AvatarImage src="/avatars/01.png" alt={user?.firstName} />
                       <AvatarFallback className="bg-accent text-accent-foreground text-xs">
-                        {getInitials(user?.firstName || '', user?.lastName || '')}
+                        {getInitials(user?.firstName || "", user?.lastName || "")}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -195,7 +222,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 <DropdownMenuContent className="w-56 bg-popover border-border" align="end">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none text-popover-foreground">{user?.firstName} {user?.lastName}</p>
+                      <p className="text-sm font-medium leading-none text-popover-foreground">
+                        {user?.firstName} {user?.lastName}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                     </div>
                   </DropdownMenuLabel>
@@ -210,9 +239,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background">{children}</main>
       </div>
     </div>
   );

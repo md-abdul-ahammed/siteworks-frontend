@@ -42,7 +42,7 @@ export const DashboardSkeleton = () => {
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Header Skeleton */}
         <header className="bg-card shadow-sm border-b border-border flex-shrink-0">
-          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-14">
+          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-14 sm:py-0 lg:py-[31px]">
             <div className="flex items-center">
               <Skeleton className="h-5 w-24" />
             </div>

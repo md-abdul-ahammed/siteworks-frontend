@@ -14,6 +14,7 @@ export interface User {
   city: string;
   postcode: string;
   state?: string;
+  role: string; // 'admin' or 'user'
   isVerified: boolean;
   isActive: boolean;
   lastLoginAt?: string;
@@ -87,7 +88,8 @@ class AuthService {
   }
 
   private getApiBaseUrl(): string {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    // Use relative URLs to call frontend API routes (which act as proxies to backend)
+    return '';
   }
 
   private isRateLimited(endpoint: string): boolean {
@@ -126,6 +128,17 @@ class AuthService {
         error: 'Too many requests. Please wait a moment and try again.',
         code: 'RATE_LIMIT_EXCEEDED',
       } as ApiError;
+    }
+
+    // Proactively refresh token if it's about to expire (except for refresh endpoint)
+    if (this.accessToken && this.refreshToken && endpoint !== '/api/auth/refresh' && this.shouldRefreshToken(this.accessToken)) {
+      try {
+        console.log('🔄 Proactively refreshing token...');
+        await this.handleTokenExpiration();
+      } catch (error) {
+        console.error('Failed to proactively refresh token:', error);
+        // Continue with the request, it will fail and trigger normal refresh flow
+      }
     }
 
     const url = `${this.getApiBaseUrl()}${endpoint}`;
@@ -221,23 +234,28 @@ class AuthService {
 
   private async handleTokenExpiration(): Promise<void> {
     if (!this.refreshToken) {
+      console.error('❌ No refresh token available for token expiration handling');
       this.logout();
       throw { error: 'No refresh token available', code: 'NO_REFRESH_TOKEN' } as ApiError;
     }
 
     // Prevent multiple refresh requests
     if (this.refreshPromise) {
+      console.log('🔄 Refresh already in progress, waiting...');
       await this.refreshPromise;
       return;
     }
 
+    console.log('🔄 Handling token expiration...');
     this.refreshPromise = this.refreshAccessToken();
     
     try {
       const tokens = await this.refreshPromise;
+      console.log('✅ Token refresh completed successfully');
       this.setTokens(tokens);
       this.user = await this.getCurrentUser(); // Update user data after refresh
     } catch (error) {
+      console.error('❌ Token refresh failed, logging out user:', error);
       // If refresh fails, logout the user
       this.logout();
       throw error;
@@ -300,6 +318,11 @@ class AuthService {
   }
 
   private setTokens(tokens: AuthTokens): void {
+    console.log('🔐 Setting tokens:', {
+      accessToken: tokens.accessToken ? tokens.accessToken.substring(0, 50) + '...' : null,
+      refreshToken: tokens.refreshToken ? tokens.refreshToken.substring(0, 50) + '...' : null,
+      expiresAt: tokens.expiresAt
+    });
     this.accessToken = tokens.accessToken;
     this.refreshToken = tokens.refreshToken;
     this.saveTokensToStorage();
@@ -309,7 +332,17 @@ class AuthService {
     try {
       const decoded = jwtDecode(token) as { exp: number };
       // Add 30 seconds buffer to prevent edge cases
-      return (decoded.exp * 1000) < (Date.now() - 30000);
+      return (decoded.exp * 1000) < (Date.now() + 30000);
+    } catch {
+      return true;
+    }
+  }
+
+  private shouldRefreshToken(token: string): boolean {
+    try {
+      const decoded = jwtDecode(token) as { exp: number };
+      // Refresh token 2 minutes before it expires
+      return (decoded.exp * 1000) < (Date.now() + 2 * 60 * 1000);
     } catch {
       return true;
     }
@@ -398,28 +431,24 @@ class AuthService {
 
   async refreshAccessToken(): Promise<AuthTokens> {
     if (!this.refreshToken) {
+      console.error('❌ No refresh token available');
       throw { error: 'No refresh token available', code: 'NO_REFRESH_TOKEN' } as ApiError;
     }
 
-    const response = await fetch(`${this.getApiBaseUrl()}/api/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken: this.refreshToken }),
-    });
+    console.log('🔄 Attempting to refresh access token...');
+    
+    try {
+      const response = await this.makeRequest<{ tokens: AuthTokens }>('/api/auth/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken: this.refreshToken }),
+      });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      this.logout();
-      throw {
-        error: data.error || 'Failed to refresh token',
-        code: data.code || 'REFRESH_FAILED',
-      } as ApiError;
+      console.log('✅ Token refresh successful');
+      return response.tokens;
+    } catch (error) {
+      console.error('❌ Token refresh failed:', error);
+      throw error;
     }
-
-    return data.tokens;
   }
 
   async logout(): Promise<void> {
@@ -511,6 +540,26 @@ class AuthService {
     } catch (error) {
       console.error('Error checking phone uniqueness:', error);
       return false; // Assume not unique if there's an error
+    }
+  }
+
+  // Check if email is available (for frontend validation)
+  async checkEmailAvailability(email: string): Promise<{ isAvailable: boolean; error?: string }> {
+    try {
+      await this.makeRequest<{ success: boolean; message: string; code: string }>('/api/auth/validate-email', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+      return { isAvailable: true };
+    } catch (error) {
+      console.error('Error checking email availability:', error);
+      if (error && typeof error === 'object' && 'code' in error) {
+        const apiError = error as ApiError;
+        if (apiError.code === 'CUSTOMER_EXISTS') {
+          return { isAvailable: false, error: ' Email already exists' };
+        }
+      }
+      return { isAvailable: false, error: 'Error checking email availability' };
     }
   }
 

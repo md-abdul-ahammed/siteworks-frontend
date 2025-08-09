@@ -36,7 +36,7 @@ export const usePhoneValidation = () => {
         const isUnique = await authService.checkPhoneUniqueness(phoneString);
         
         if (!isUnique) {
-          setUniquenessError('Phone number is already registered by another user');
+          setUniquenessError('Phone number is already exist');
         } else {
           setUniquenessError(null);
         }

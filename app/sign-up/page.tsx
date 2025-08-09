@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 // Import components
 import {
   StepIndicator,
-  EmailVerificationStep,
   PersonalInfoStep,
   AddressStep,
   BankDetailsStep,
@@ -16,14 +15,11 @@ import {
 } from './components';
 
 // Import UI components
-import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Import hooks and constants
 import { useMultiStepForm } from './hooks/useMultiStepForm';
 import { FORM_CONSTANTS } from './constants/form';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import DirectDebitStatus from '@/components/GoCardlessStatus';
 
 const CustomerDetailsForm: React.FC = () => {
   const { signUpCustomer, isLoading, isAuthenticated, user } = useAuth();
@@ -47,7 +43,6 @@ const CustomerDetailsForm: React.FC = () => {
     currentStep,
     totalSteps,
     register,
-    handleSubmit,
     errors,
     watchedValues,
     watch,
@@ -55,11 +50,9 @@ const CustomerDetailsForm: React.FC = () => {
     control,
     nextStep,
     prevStep,
-    emailVerificationRef,
-    handleOtpSent,
-    handleVerificationSuccess,
-    isEmailVerified,
-    isOtpSent,
+    isCheckingEmail,
+    isCheckingPhone,
+    phoneUniquenessError,
   } = useMultiStepForm();
 
   // Handle form completion with authentication
@@ -110,20 +103,6 @@ const CustomerDetailsForm: React.FC = () => {
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION:
-        return (
-          <EmailVerificationStep 
-            register={register} 
-            errors={errors} 
-            watch={watch} 
-            setValue={setValue}
-            onOtpSent={handleOtpSent}
-            onVerificationSuccess={handleVerificationSuccess}
-            isEmailVerified={isEmailVerified}
-            isOtpSent={isOtpSent}
-            ref={emailVerificationRef}
-          />
-        );
       case FORM_CONSTANTS.STEPS.PERSONAL_INFO:
         return <PersonalInfoStep register={register} errors={errors} watch={watch} setValue={setValue} />;
       case FORM_CONSTANTS.STEPS.ADDRESS:
@@ -160,44 +139,39 @@ const CustomerDetailsForm: React.FC = () => {
           </div>
           
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            {currentStep === FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION ? 'Sign Up' : 'Complete Your Profile'}
+            Complete Your Profile
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            {currentStep === FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION 
-              ? 'Start by verifying your email address'
-              : 'Please provide your information to continue'
-            }
+            Please provide your information to continue
           </p>
           
           {/* Sign In Link */}
-          {currentStep === FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION && (
-            <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-              <div className="flex items-center justify-center space-x-2">
-                <svg 
-                  className="w-5 h-5 text-gray-600" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
+          <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-center space-x-2">
+              <svg 
+                className="w-5 h-5 text-gray-600" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                />
+              </svg>
+              <p className="text-sm text-gray-700">
+                Already have an account?{' '}
+                <Link 
+                  href="/sign-in"
+                  className="font-semibold text-gray-600 hover:text-gray-800 underline transition-colors duration-200"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
-                  />
-                </svg>
-                <p className="text-sm text-gray-700">
-                  Already have an account?{' '}
-                  <Link 
-                    href="/sign-in"
-                    className="font-semibold text-gray-600 hover:text-gray-800 underline transition-colors duration-200"
-                  >
-                    Sign in here
-                  </Link>
-                </p>
-              </div>
+                  Sign in here
+                </Link>
+              </p>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Step Indicator */}
@@ -291,12 +265,8 @@ const CustomerDetailsForm: React.FC = () => {
             totalSteps={totalSteps}
             onNext={nextStep}
             onPrevious={prevStep}
-            isNextDisabled={
-              (currentStep === FORM_CONSTANTS.STEPS.EMAIL_VERIFICATION && !isEmailVerified) ||
-              isSubmitting ||
-              isLoading
-            }
-            isSubmitting={isSubmitting || isLoading}
+            isNextDisabled={isSubmitting || isLoading || isCheckingEmail || isCheckingPhone || !!phoneUniquenessError}
+            isSubmitting={isSubmitting || isLoading || isCheckingEmail || isCheckingPhone}
           />
         </div>
       </div>

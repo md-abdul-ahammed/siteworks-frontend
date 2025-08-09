@@ -1,18 +1,16 @@
 export const FORM_CONSTANTS = {
-  TOTAL_STEPS: 5,
+  TOTAL_STEPS: 4,
   STEPS: {
-    EMAIL_VERIFICATION: 1,
-    PERSONAL_INFO: 2,
-    ADDRESS: 3,
-    PASSWORD: 4,
-    BANK_DETAILS: 5,
+    PERSONAL_INFO: 1,
+    ADDRESS: 2,
+    PASSWORD: 3,
+    BANK_DETAILS: 4,
   },
   STEP_LABELS: {
-    1: "Email Verification",
-    2: "Personal Information",
-    3: "Address Details", 
-    4: "Password Setup",
-    5: "Bank Details",
+    1: "Personal Information",
+    2: "Address Details", 
+    3: "Password Setup",
+    4: "Bank Details",
   },
   COUNTRIES: [
     { value: "AX", label: "Åland Islands" },

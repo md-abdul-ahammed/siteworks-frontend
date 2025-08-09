@@ -1,24 +1,29 @@
 'use client';
 
 import React from 'react';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { UserOnlyRoute } from '@/components/UserOnlyRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { TrendingUp, BarChart3, PieChart, Activity } from 'lucide-react';
+import { TrendingUp, BarChart3, PieChart, Activity, Shield, Users } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import TransactionChart from '@/components/TransactionChart';
 import TransactionSummary from '@/components/TransactionSummary';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const router = useRouter();
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
   };
 
+  const isAdmin = user?.role === 'admin';
+
   return (
-    <ProtectedRoute useDashboardSkeleton={true}>
+    <UserOnlyRoute useDashboardSkeleton={true}>
       <DashboardLayout>
         {/* Welcome Header */}
         <div className="mb-8">
@@ -32,15 +37,43 @@ const DashboardPage: React.FC = () => {
                 </Avatar>
                 <div>
                   <h1 className="text-2xl font-bold">Welcome back, {user?.firstName}!</h1>
-                  <p className="text-blue-100">Here&apos;s your transaction analytics dashboard</p>
+                  <p className="text-blue-100">
+                    {isAdmin ? 'Admin Dashboard - Manage your platform' : 'Here\'s your transaction analytics dashboard'}
+                  </p>
+                  {isAdmin && (
+                    <div className="flex items-center mt-2">
+                      <Shield className="h-4 w-4 mr-2" />
+                      <span className="text-sm text-blue-100">Administrator</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="hidden md:flex items-center space-x-2">
-                <Activity className="h-8 w-8 text-white/80" />
-                <div className="text-right">
-                  <p className="text-sm text-blue-100">Live Analytics</p>
-                  <p className="text-lg font-semibold">Real-time</p>
-                </div>
+                {isAdmin ? (
+                  <div className="flex items-center space-x-4">
+                    <Button 
+                      variant="outline" 
+                      className="border-white/20 text-white hover:bg-white/10"
+                      onClick={() => router.push('/admin')}
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Admin Panel
+                    </Button>
+                    <Activity className="h-8 w-8 text-white/80" />
+                    <div className="text-right">
+                      <p className="text-sm text-blue-100">System Status</p>
+                      <p className="text-lg font-semibold">Active</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Activity className="h-8 w-8 text-white/80" />
+                    <div className="text-right">
+                      <p className="text-sm text-blue-100">Live Analytics</p>
+                      <p className="text-lg font-semibold">Real-time</p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -128,7 +161,7 @@ const DashboardPage: React.FC = () => {
           </Card>
         </div>
       </DashboardLayout>
-    </ProtectedRoute>
+    </UserOnlyRoute>
   );
 };
 

@@ -34,8 +34,14 @@ const SignInPage: React.FC = () => {
   useEffect(() => {
     console.log('🔍 Sign-in page - isAuthenticated:', isAuthenticated, 'user:', user);
     if (isAuthenticated) {
-      console.log('✅ User is authenticated, redirecting to dashboard...');
-      router.push('/dashboard');
+      console.log('✅ User is authenticated, redirecting based on role...');
+      if (user?.role === 'admin') {
+        console.log('🚀 Redirecting admin to /admin...');
+        router.push('/admin');
+      } else {
+        console.log('🚀 Redirecting user to /dashboard...');
+        router.push('/dashboard');
+      }
     }
   }, [isAuthenticated, router, user]);
 

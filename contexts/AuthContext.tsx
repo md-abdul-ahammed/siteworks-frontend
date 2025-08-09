@@ -20,6 +20,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   verifyResetToken: (token: string) => Promise<{ email: string; firstName: string; lastName: string }>;
+  checkEmailAvailability: (email: string) => Promise<{ isAvailable: boolean; error?: string }>;
   getAuthHeaders: () => Record<string, string>;
   error: string | null;
   clearError: () => void;
@@ -72,6 +73,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
   }, []);
+
+  // Background token refresh mechanism
+  useEffect(() => {
+    if (!user) return;
+
+    const setupTokenRefresh = () => {
+      // Check token every 5 minutes
+      const interval = setInterval(async () => {
+        try {
+          const accessToken = authService.getAccessToken();
+          if (accessToken && authService.isAuthenticated()) {
+            // This will trigger proactive refresh if needed
+            await authService.getCurrentUser();
+          }
+        } catch (error) {
+          console.error('Background token refresh failed:', error);
+          // If refresh fails, user will be logged out on next request
+        }
+      }, 5 * 60 * 1000); // 5 minutes
+
+      return () => clearInterval(interval);
+    };
+
+    const cleanup = setupTokenRefresh();
+    return cleanup;
+  }, [user]);
 
   const handleError = (error: unknown): void => {
     console.error('Auth error:', error);
@@ -192,12 +219,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Debug logging
       console.log('🔐 Sign in successful:', response.customer);
-      console.log('🔄 Setting user state and redirecting to dashboard...');
+      console.log('🔄 Setting user state and redirecting based on role...');
       
       // Wait a bit for state to update before redirecting
       setTimeout(() => {
-        console.log('🚀 Redirecting to dashboard...');
-        router.push('/dashboard');
+        // Redirect based on user role
+        if (response.customer.role === 'admin') {
+          console.log('🚀 Redirecting admin to /admin/dashboard...');
+          router.push('/admin/dashboard');
+        } else {
+          console.log('🚀 Redirecting user to /dashboard...');
+          router.push('/dashboard');
+        }
       }, 100);
     } catch (error) {
       handleError(error);
@@ -225,7 +258,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Wait a bit for state to update before redirecting
       setTimeout(() => {
-        router.push('/dashboard');
+        // Redirect based on user role
+        if (response.customer.role === 'admin') {
+          console.log('🚀 Redirecting admin to /admin/dashboard...');
+          router.push('/admin/dashboard');
+        } else {
+          console.log('🚀 Redirecting user to /dashboard...');
+          router.push('/dashboard');
+        }
       }, 100);
     } catch (error) {
       handleError(error);
@@ -276,7 +316,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Wait a bit for state to update before redirecting
       setTimeout(() => {
-        router.push('/dashboard');
+        // Redirect based on user role
+        if (response.customer.role === 'admin') {
+          console.log('🚀 Redirecting admin to /admin/dashboard...');
+          router.push('/admin/dashboard');
+        } else {
+          console.log('🚀 Redirecting user to /dashboard...');
+          router.push('/dashboard');
+        }
       }, 100);
     } catch (error) {
       handleError(error);
@@ -430,6 +477,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [clearError]);
 
+  const checkEmailAvailability = React.useCallback(async (email: string): Promise<{ isAvailable: boolean; error?: string }> => {
+    try {
+      clearError();
+      
+      const result = await authService.checkEmailAvailability(email);
+      return result;
+    } catch (error) {
+      handleError(error);
+      throw error;
+    }
+  }, [clearError]);
+
   const getAuthHeaders = React.useCallback((): Record<string, string> => {
     return authService.getAuthHeaders();
   }, []);
@@ -454,6 +513,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     forgotPassword,
     resetPassword,
     verifyResetToken,
+    checkEmailAvailability,
     getAuthHeaders,
     error,
     clearError,

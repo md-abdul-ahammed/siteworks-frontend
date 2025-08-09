@@ -4,12 +4,8 @@ import { isValidPhoneNumber, parsePhoneNumber } from "libphonenumber-js";
 
 // Form validation schema
 export const customerDetailsSchema = z.object({
-  // Email Verification
+  // Email (simple validation - just check if it exists)
   email: z.string().email("Please enter a valid email address"),
-  otp: z.string()
-    .min(6, "OTP must be 6 digits")
-    .max(6, "OTP must be 6 digits")
-    .regex(/^[0-9]+$/, "OTP must contain only numbers"),
   
   // Password (added after payment success)
   password: z.string()
@@ -119,7 +115,7 @@ export const customerDetailsSchema = z.object({
       // Check phone number uniqueness (this will be handled by backend validation)
       // Frontend will show a generic message, backend will provide specific feedback
       return true;
-    }, "Phone number is already registered by another user"),
+    }, "Phone number is already exist"),
   
   // Address Information
   countryOfResidence: z.string().min(1, "Country of residence is required"),
