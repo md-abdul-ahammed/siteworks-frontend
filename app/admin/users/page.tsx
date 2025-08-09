@@ -39,6 +39,7 @@ import {
   Building
 } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
+import { ErrorDisplay } from '@/components/ui/error-display';
 import { useRouter } from 'next/navigation';
 import { usePhoneValidation } from '@/hooks/usePhoneValidation';
 import { useEmailValidation } from '@/hooks/useEmailValidation';
@@ -447,33 +448,15 @@ export default function AdminUsersPage() {
 
         {/* Error State */}
         {error && (
-          <Card className="mb-6 border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-3">
-                <AlertCircle className="h-5 w-5 text-red-500" />
-                <div className="flex-1">
-                  <h3 className="font-medium text-red-800">
-                    {error.type === 'database' && 'Database Connection Error'}
-                    {error.type === 'auth' && 'Authentication Error'}
-                    {error.type === 'network' && 'Network Error'}
-                    {error.type === 'unknown' && 'Error'}
-                  </h3>
-                  <p className="text-sm text-red-600 mt-1">{error.message}</p>
-                </div>
-                {error.retryable && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={retryFetch}
-                    disabled={loading}
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    Retry
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <ErrorDisplay
+            type={error.type === 'database' ? 'database' : error.type === 'auth' ? 'auth' : error.type === 'network' ? 'network' : 'general'}
+            message={error.message}
+            variant="inline"
+            size="md"
+            onRetry={error.retryable ? retryFetch : undefined}
+            isRetrying={loading}
+            className="mb-6"
+          />
         )}
 
         {/* Filters */}

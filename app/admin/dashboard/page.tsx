@@ -18,6 +18,7 @@ import {
   PieChart as PieChartIcon
 } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
+import { ErrorDisplay } from '@/components/ui/error-display';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
@@ -620,14 +621,15 @@ const AdminDashboardPage: React.FC = () => {
   if (error) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <Shield className="h-16 w-16 mx-auto text-red-500 mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Dashboard</h1>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <Button onClick={fetchDashboardData}>Retry</Button>
-          </div>
-        </div>
+        <ErrorDisplay
+          type="database"
+          title="Error Loading Dashboard"
+          message={error}
+          variant="fullscreen"
+          size="lg"
+          onRetry={fetchDashboardData}
+          retryText="Retry"
+        />
       </AdminLayout>
     );
   }

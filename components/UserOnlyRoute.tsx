@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { PageLoading } from './PageLoading';
-import { Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ErrorDisplay } from '@/components/ui/error-display';
 
 interface UserOnlyRouteProps {
   children: React.ReactNode;
@@ -54,16 +54,24 @@ export const UserOnlyRoute: React.FC<UserOnlyRouteProps> = ({
   if (user?.role === 'admin') {
     console.log('❌ UserOnlyRoute - Admin user, showing access denied');
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Shield className="h-16 w-16 mx-auto text-red-500 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-6">This page is for regular users only. Please use the admin panel.</p>
-          <Button onClick={() => router.push('/admin')}>
+      <ErrorDisplay
+        type="access"
+        title="Access Denied"
+        message="This page is for regular users only. Please use the admin panel."
+        variant="fullscreen"
+        size="lg"
+        showRetry={false}
+        actions={
+          <Button 
+            onClick={() => router.push('/admin')}
+            variant="secondary"
+            size="lg"
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-white/30 backdrop-blur-sm"
+          >
             Go to Admin Panel
           </Button>
-        </div>
-      </div>
+        }
+      />
     );
   }
 
