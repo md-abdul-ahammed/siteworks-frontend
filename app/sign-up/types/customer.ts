@@ -17,31 +17,16 @@ export const customerDetailsSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   companyName: z.string()
-    .optional()
+    .min(1, "Company name is required")
+    .min(2, "Company name must be at least 2 characters")
+    .max(100, "Company name cannot exceed 100 characters")
+    .regex(/^[a-zA-Z0-9\s\-'\.&]+$/, "Company name can only contain letters, numbers, spaces, hyphens, apostrophes, periods, and ampersands")
     .refine((value) => {
-      // If no value provided, it's valid (optional field)
-      if (!value || value.trim().length === 0) {
-        return true;
-      }
-      
-      // If value provided, validate it
-      if (value.length < 2) {
-        return false;
-      }
-      
-      if (value.length > 100) {
-        return false;
-      }
-      
-      if (!/^[a-zA-Z0-9\s\-'\.&]+$/.test(value)) {
-        return false;
-      }
-      
       // Check for common test names
       const testNames = ['test', 'demo', 'example', 'sample', 'company', 'business', 'corp', 'inc', 'llc'];
       const lowerValue = value.toLowerCase();
       return !testNames.some(name => lowerValue.includes(name));
-    }, "Company name must be 2-100 characters and contain only letters, numbers, spaces, hyphens, apostrophes, periods, and ampersands"),
+    }, "Please enter a valid company name"),
   phone: z.string()
     .min(1, "Phone number is required")
     .refine((value) => {
@@ -52,15 +37,29 @@ export const customerDetailsSchema = z.object({
       
       try {
         // Use libphonenumber-js for professional validation
+        const phoneNumber = parsePhoneNumber(value);
+        
+        if (!phoneNumber) {
+          return false;
+        }
+        
+        // Check if the phone number is valid AND complete
         const isValid = isValidPhoneNumber(value);
+        
+        // For US numbers, ensure we have at least 10 digits (area code + 7 digits)
+        if (phoneNumber.country === 'US') {
+          const nationalNumber = phoneNumber.nationalNumber;
+          if (!nationalNumber || nationalNumber.length < 10) {
+            return false;
+          }
+        }
         
         if (!isValid) {
           return false;
         }
         
         // Additional checks for common invalid patterns
-        const phoneNumber = parsePhoneNumber(value);
-        const nationalNumber = phoneNumber?.nationalNumber;
+        const nationalNumber = phoneNumber.nationalNumber;
         
         if (nationalNumber) {
           // Check for repeated digits (like 1111111111)

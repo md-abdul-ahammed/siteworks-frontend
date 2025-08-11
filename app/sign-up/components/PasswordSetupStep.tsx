@@ -23,8 +23,8 @@ const PasswordSetupStep: React.FC<FormStepProps> = ({ register, errors, watch, s
       1: { label: 'Very Weak', color: 'bg-red-500' },
       2: { label: 'Weak', color: 'bg-orange-500' },
       3: { label: 'Fair', color: 'bg-yellow-500' },
-      4: { label: 'Good', color: 'bg-gray-500' },
-      5: { label: 'Strong', color: 'bg-gray-500' },
+      4: { label: 'Good', color: 'bg-green-500' },
+      5: { label: 'Strong', color: 'bg-green-600' },
     };
     
     return { strength: score, ...strengthMap[score as keyof typeof strengthMap] };
@@ -154,7 +154,7 @@ const PasswordSetupStep: React.FC<FormStepProps> = ({ register, errors, watch, s
           <ul className="text-xs text-gray-600 space-y-1">
             <li className={`flex ${watchedPassword.length >= 8 ? "font-bold" : "font-medium"} items-center`}>
               <svg
-                className={`h-4 w-4 mr-2 ${watchedPassword.length >= 8 ? "text-gray-800" : "text-gray-400"}`}
+                className={`h-4 w-4 mr-2 ${watchedPassword.length >= 8 ? "text-green-600" : "text-gray-400"}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -168,7 +168,7 @@ const PasswordSetupStep: React.FC<FormStepProps> = ({ register, errors, watch, s
             </li>
             <li className={`flex ${/[a-z]/.test(watchedPassword) ? "font-bold" : "font-medium"} items-center`}>
               <svg
-                className={`h-4 w-4 mr-2 ${/[a-z]/.test(watchedPassword) ? "text-gray-800" : "text-gray-400"}`}
+                className={`h-4 w-4 mr-2 ${/[a-z]/.test(watchedPassword) ? "text-green-600" : "text-gray-400"}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -182,7 +182,7 @@ const PasswordSetupStep: React.FC<FormStepProps> = ({ register, errors, watch, s
             </li>
             <li className={`flex ${/[A-Z]/.test(watchedPassword) ? "font-bold" : "font-medium"} items-center`}>
               <svg
-                className={`h-4 w-4 mr-2 ${/[A-Z]/.test(watchedPassword) ? "text-gray-800" : "text-gray-400"}`}
+                className={`h-4 w-4 mr-2 ${/[A-Z]/.test(watchedPassword) ? "text-green-600" : "text-gray-400"}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -196,7 +196,7 @@ const PasswordSetupStep: React.FC<FormStepProps> = ({ register, errors, watch, s
             </li>
             <li className={`flex ${/\d/.test(watchedPassword) ? "font-bold" : "font-medium"} items-center`}>
               <svg
-                className={`h-4 w-4 mr-2 ${/\d/.test(watchedPassword) ? "text-gray-800" : "text-gray-400"}`}
+                className={`h-4 w-4 mr-2 ${/\d/.test(watchedPassword) ? "text-green-600" : "text-gray-400"}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -210,7 +210,7 @@ const PasswordSetupStep: React.FC<FormStepProps> = ({ register, errors, watch, s
             </li>
             <li className={`flex ${/[@$!%*?&]/.test(watchedPassword) ? "font-bold" : "font-medium"} items-center`}>
               <svg
-                className={`h-4 w-4 mr-2 ${/[@$!%*?&]/.test(watchedPassword) ? "text-gray-800" : "text-gray-400"}`}
+                className={`h-4 w-4 mr-2 ${/[@$!%*?&]/.test(watchedPassword) ? "text-green-600" : "text-gray-400"}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >

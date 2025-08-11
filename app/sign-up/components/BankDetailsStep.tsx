@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Controller } from 'react-hook-form';
-import { FORM_CONSTANTS } from '../constants/form';
 import { validateBankDetails, type ValidationResult } from '@/lib/bankValidation';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -19,11 +18,8 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
   const bankCode = watch?.('bankCode') || '';
   const accountNumber = watch?.('accountNumber') || '';
   const accountType = watch?.('accountType') || '';
-  const preferredCurrency = watch?.('preferredCurrency') || '';
   const firstName = watch?.('firstName') || '';
   const lastName = watch?.('lastName') || '';
-
-
 
   // State for real-time validation
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -71,8 +67,6 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
       setValue?.('accountHolderName', fullName);
     }
   }, [firstName, lastName, accountHolderName, setValue]);
-
-
 
   // Helper function to validate input as user types
   const validateNumericInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -246,39 +240,8 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
           )}
         </div>
 
-        {/* Preferred Currency */}
-        <div className="space-y-2">
-          <Label htmlFor="preferredCurrency" className="text-sm font-medium text-gray-700">
-            Preferred currency
-          </Label>
-          <Controller
-            name="preferredCurrency"
-            control={control}
-            rules={{ required: "Preferred currency is required" }}
-            render={({ field, fieldState }) => (
-              <Select onValueChange={field.onChange} value={field.value || ''}>
-                <SelectTrigger className="w-full h-10">
-                  <SelectValue placeholder="Please select your preferred currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FORM_CONSTANTS.CURRENCIES.map((currency) => (
-                    <SelectItem key={currency.value} value={currency.value}>
-                      {currency.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {errors.preferredCurrency && (
-            <p className="text-xs text-red-600 mt-1">{errors.preferredCurrency.message}</p>
-          )}
-        </div>
-
-
-
         {/* Validation Summary */}
-        {(errors.accountHolderName || errors.bankCode || errors.accountNumber || errors.accountType || errors.preferredCurrency || (validationResult && !validationResult.isValid)) && (
+        {(errors.accountHolderName || errors.bankCode || errors.accountNumber || errors.accountType || (validationResult && !validationResult.isValid)) && (
           <div className="bg-red-50 border border-red-200 rounded-md p-3">
             <div className="flex items-start">
               <svg className="h-4 w-4 text-red-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -291,7 +254,6 @@ const BankDetailsStep: React.FC<BankDetailsStepProps> = ({ register, errors, wat
                   {errors.bankCode && <li>{errors.bankCode.message}</li>}
                   {errors.accountNumber && <li>{errors.accountNumber.message}</li>}
                   {errors.accountType && <li>{errors.accountType.message}</li>}
-                  {errors.preferredCurrency && <li>{errors.preferredCurrency.message}</li>}
                   {validationResult && !validationResult.isValid && validationResult.errors.map((error, index) => (
                     <li key={index}>{error}</li>
                   ))}

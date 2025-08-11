@@ -144,7 +144,6 @@ export const useMultiStepForm = () => {
       if (errors.bankCode) currentStepErrors.bankCode = errors.bankCode;
       if (errors.accountNumber) currentStepErrors.accountNumber = errors.accountNumber;
       if (errors.accountType) currentStepErrors.accountType = errors.accountType;
-      if (errors.preferredCurrency) currentStepErrors.preferredCurrency = errors.preferredCurrency;
     }
     
     return currentStepErrors;

@@ -120,6 +120,26 @@ const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, se
       <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
 
       <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First Name</Label>
+            <Input {...register("firstName")} type="text" id="firstName" placeholder="Enter your first name" />
+            {errors.firstName && <p className="text-xs text-red-600">{errors.firstName.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input {...register("lastName")} type="text" id="lastName" placeholder="Enter your last name" />
+            {errors.lastName && <p className="text-xs text-red-600">{errors.lastName.message}</p>}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="companyName">Company Name</Label>
+          <Input {...register("companyName")} type="text" id="companyName" placeholder="Enter your company name" />
+          {errors.companyName && <p className="text-xs text-red-600">{errors.companyName.message}</p>}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="email">Email Address</Label>
           <Input
@@ -157,29 +177,7 @@ const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, se
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">First Name</Label>
-            <Input {...register("firstName")} type="text" id="firstName" placeholder="Enter your first name" />
-            {errors.firstName && <p className="text-xs text-red-600">{errors.firstName.message}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
-            <Input {...register("lastName")} type="text" id="lastName" placeholder="Enter your last name" />
-            {errors.lastName && <p className="text-xs text-red-600">{errors.lastName.message}</p>}
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-2">
-          <Label htmlFor="companyName">
-            Company Name <span className="text-gray-500">(optional)</span>
-          </Label>
-          <Input {...register("companyName")} type="text" id="companyName" placeholder="Enter your company name" />
-          {errors.companyName && <p className="text-xs text-red-600">{errors.companyName.message}</p>}
-        </div>
-
-        <div className="mt-4 space-y-2">
+        <div className="space-y-2">
           <Label htmlFor="phone">Phone Number</Label>
           <PhoneInput
             id="phone"
@@ -187,6 +185,7 @@ const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, se
             value={phoneValue}
             onChange={handlePhoneChange}
             countries={FORM_CONSTANTS.COUNTRIES.map((country) => country.value)}
+            defaultCountry="US"
             onBlur={() => {
               // Trigger validation on blur
               setValue?.("phone", phoneValue, { shouldValidate: true });
@@ -206,18 +205,44 @@ const PersonalInfoStep: React.FC<FormStepProps> = ({ register, errors, watch, se
               Checking phone number availability...
             </p>
           )}
-          {!errors.phone && !uniquenessError && !isCheckingUniqueness && phoneValue && (
-            <p className="text-xs text-gray-600 flex items-center gap-1">
-              <svg className="h-3 w-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Valid phone number format
-            </p>
-          )}
+          {!errors.phone && !uniquenessError && !isCheckingUniqueness && phoneValue && (() => {
+            try {
+              const phoneNumber = parsePhoneNumber(phoneValue);
+              const isValid = phoneNumber && phoneNumber.isValid();
+              const isComplete = phoneNumber && phoneNumber.country === 'US' && phoneNumber.nationalNumber && phoneNumber.nationalNumber.length >= 10;
+              
+              if (isValid && isComplete) {
+                return (
+                  <p className="text-xs text-gray-600 flex items-center gap-1">
+                    <svg className="h-3 w-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Valid phone number format
+                  </p>
+                );
+              } else if (phoneValue && phoneValue.trim().length > 0) {
+                return (
+                  <p className="text-xs text-yellow-600 flex items-center gap-1">
+                    <svg className="h-3 w-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Please complete your phone number
+                  </p>
+                );
+              }
+              return null;
+            } catch {
+              return null;
+            }
+          })()}
         </div>
       </div>
     </div>
