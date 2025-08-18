@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { showToast } from '@/lib/toast';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface SignInFormData {
   email: string;
@@ -20,6 +21,7 @@ const SignInPage: React.FC = () => {
   const router = useRouter();
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -36,11 +38,11 @@ const SignInPage: React.FC = () => {
     if (isAuthenticated) {
       console.log('✅ User is authenticated, redirecting based on role...');
       if (user?.role === 'admin') {
-        console.log('🚀 Redirecting admin to /admin...');
-        router.push('/admin');
+        console.log('🚀 Redirecting admin to /admin/users...');
+        router.push('/admin/users');
       } else {
-        console.log('🚀 Redirecting user to /dashboard...');
-        router.push('/dashboard');
+        console.log('🚀 Redirecting user to /dashboard/profile...');
+        router.push('/dashboard/profile');
       }
     }
   }, [isAuthenticated, router, user]);
@@ -101,7 +103,7 @@ const SignInPage: React.FC = () => {
       }
       
       setLocalError(errorMessage);
-      toast.error(errorMessage);
+      showToast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -175,20 +177,34 @@ const SignInPage: React.FC = () => {
               <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </Label>
-              <Input
-                id="password"
-                type="password"
-                {...register('password', {
-                  required: 'Password is required',
-                  minLength: {
-                    value: 6,
-                    message: 'Password must be at least 6 characters',
-                  },
-                })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
-                placeholder="Enter your password"
-                disabled={isFormLoading}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  {...register('password', {
+                    required: 'Password is required',
+                    minLength: {
+                      value: 6,
+                      message: 'Password must be at least 6 characters',
+                    },
+                  })}
+                  className="mt-1 block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
+                  placeholder="Enter your password"
+                  disabled={isFormLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center mt-1"
+                  disabled={isFormLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
+              </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}

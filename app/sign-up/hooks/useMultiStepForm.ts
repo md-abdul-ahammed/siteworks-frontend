@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { customerDetailsSchema, CustomerDetailsForm } from '../types/customer';
 import { FORM_CONSTANTS } from '../constants/form';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { showToast, toastMessages } from '@/lib/toast';
 import { authService } from '@/lib/auth';
 import { usePhoneValidation } from '@/hooks/usePhoneValidation';
 
@@ -49,14 +49,14 @@ export const useMultiStepForm = () => {
           try {
             const result = await checkEmailAvailability(email);
             if (!result.isAvailable) {
-              toast.error(result.error || 'Email is already registered');
+              showToast.error(result.error || 'Email is already registered');
               setHasAttemptedSubmit(true);
               setIsCheckingEmail(false);
               return;
             }
           } catch (error) {
             console.error('Email validation error:', error);
-            toast.error('Error checking email availability');
+            showToast.error(toastMessages.validation.emailCheckError);
             setHasAttemptedSubmit(true);
             setIsCheckingEmail(false);
             return;
@@ -71,13 +71,13 @@ export const useMultiStepForm = () => {
           try {
             const isPhoneUnique = await authService.checkPhoneUniqueness(phone);
             if (!isPhoneUnique) {
-              toast.error('Phone number is already registered');
+              showToast.error(toastMessages.auth.phoneAlreadyExists);
               setHasAttemptedSubmit(true);
               return;
             }
           } catch (error) {
             console.error('Phone validation error:', error);
-            toast.error('Error checking phone availability');
+            showToast.error(toastMessages.validation.phoneCheckError);
             setHasAttemptedSubmit(true);
             return;
           }

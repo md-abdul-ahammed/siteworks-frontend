@@ -33,13 +33,13 @@ export default function TestAdminAuthPage() {
     }
   };
 
-  const testDashboardAccess = async () => {
+  const testUsersAccess = async () => {
     try {
-      setTestResult('Testing dashboard access...');
+      setTestResult('Testing users access...');
                    const authTokens = localStorage.getItem('auth_tokens');
              const token = authTokens ? JSON.parse(authTokens).accessToken : null;
              
-             const response = await fetch('/api/admin/dashboard', {
+             const response = await fetch('/api/admin/users', {
                headers: {
                  'Authorization': `Bearer ${token}`,
                  'Content-Type': 'application/json',
@@ -48,14 +48,14 @@ export default function TestAdminAuthPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setTestResult(`Dashboard access successful! Data: ${JSON.stringify(data, null, 2)}`);
+        setTestResult(`Users access successful! Data: ${JSON.stringify(data, null, 2)}`);
       } else {
         const errorData = await response.json();
-        setTestResult(`Dashboard access failed: ${JSON.stringify(errorData)}`);
+        setTestResult(`Users access failed: ${JSON.stringify(errorData)}`);
       }
     } catch (error) {
-      setTestResult(`Dashboard access error: ${error}`);
-      console.error('Dashboard access error:', error);
+      setTestResult(`Users access error: ${error}`);
+      console.error('Users access error:', error);
     }
   };
 
@@ -87,14 +87,14 @@ export default function TestAdminAuthPage() {
             <Button onClick={testAdminLogin} className="w-full">
               Test Admin Login
             </Button>
-            <Button onClick={testDashboardAccess} className="w-full">
-              Test Dashboard Access
+            <Button onClick={testUsersAccess} className="w-full">
+              Test Users Access
             </Button>
             <Button 
-              onClick={() => window.location.href = '/admin/dashboard'}
+              onClick={() => window.location.href = '/admin/users'}
               className="w-full"
             >
-              Go to Admin Dashboard
+              Go to Admin Users
             </Button>
           </CardContent>
         </Card>

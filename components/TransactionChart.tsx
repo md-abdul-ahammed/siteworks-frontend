@@ -63,10 +63,11 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
       try {
         setLoading(true);
         
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/dashboard/analytics', {
           headers: {
             'Content-Type': 'application/json',
-            ...getAuthHeaders()
+            ...authHeaders
           }
         });
 
@@ -177,7 +178,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
               <YAxis 
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={(value) => `£${value}`}
+                tickFormatter={(value) => `$${value}`}
               />
               <Tooltip
                 contentStyle={{
@@ -187,7 +188,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
                   color: '#F9FAFB',
                 }}
-                formatter={(value, name) => [`£${value}`, name]}
+                formatter={(value, name) => [`$${value}`, name]}
               />
               <Legend />
               <Line
@@ -233,7 +234,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
               <YAxis 
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={(value) => `£${value}`}
+                tickFormatter={(value) => `$${value}`}
               />
               <Tooltip
                 contentStyle={{
@@ -243,7 +244,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
                   color: '#F9FAFB',
                 }}
-                formatter={(value, name) => [`£${value}`, name]}
+                formatter={(value, name) => [`$${value}`, name]}
               />
               <Area
                 type="monotone"
@@ -278,7 +279,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
               <YAxis 
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={(value) => `£${value}`}
+                tickFormatter={(value) => `$${value}`}
               />
               <Tooltip
                 contentStyle={{
@@ -288,7 +289,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
                   color: '#F9FAFB',
                 }}
-                formatter={(value) => [`£${value}`, 'Amount']}
+                formatter={(value) => [`$${value}`, 'Amount']}
               />
               <Bar
                 dataKey="amount"
@@ -326,7 +327,7 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
                   color: '#F9FAFB',
                 }}
-                formatter={(value) => [`£${value}`, 'Amount']}
+                formatter={(value) => [`$${value}`, 'Amount']}
               />
             </PieChart>
           </ResponsiveContainer>

@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { toast } from 'sonner';
+import { showToast } from '@/lib/toast';
 import { 
   Users, 
   Search,
@@ -171,7 +171,7 @@ export default function AdminUsersPage() {
     // If user is not admin, redirect to dashboard
     if (user && user.role !== 'admin') {
       console.log('❌ User is not admin, redirecting to dashboard');
-      router.push('/dashboard');
+              router.push('/dashboard/profile');
       return;
     }
 
@@ -196,10 +196,11 @@ export default function AdminUsersPage() {
       });
 
       console.log('🔍 Fetching users with params:', params.toString());
-      console.log('🔑 Auth headers:', authService.getAuthHeaders());
+      const authHeaders = await authService.getAuthHeaders();
+      console.log('🔑 Auth headers:', authHeaders);
 
       const response = await fetch(`/api/admin/users?${params}`, {
-        headers: authService.getAuthHeaders()
+        headers: authHeaders
       });
 
       console.log('📊 Response status:', response.status);
@@ -286,16 +287,17 @@ export default function AdminUsersPage() {
     
     // Check for validation errors before submitting
     if (availabilityError || uniquenessError) {
-      toast.error('Please fix validation errors before saving');
+      showToast.error('Please fix validation errors before saving');
       return;
     }
 
     try {
       setEditLoading(true);
+      const authHeaders = await authService.getAuthHeaders();
       const response = await fetch(`/api/admin/users/${editingUser.id}/profile`, {
         method: 'PUT',
         headers: {
-          ...authService.getAuthHeaders(),
+          ...authHeaders,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)
@@ -336,7 +338,7 @@ export default function AdminUsersPage() {
           successMessage += `\n\nIntegrations updated: ${integrations.join(', ')}`;
         }
         
-        toast.success(successMessage);
+        showToast.success(successMessage);
         
         setIsEditing(false);
         setEditingUser(null);
@@ -347,11 +349,11 @@ export default function AdminUsersPage() {
       } else {
         const errorData = await response.json();
         console.error('❌ Failed to update user:', errorData);
-        toast.error('Failed to update user: ' + (errorData.error || 'Unknown error'));
+        showToast.error('Failed to update user: ' + (errorData.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('❌ Error updating user:', error);
-      toast.error('Error updating user. Please try again.');
+      showToast.error('Error updating user. Please try again.');
     } finally {
       setEditLoading(false);
     }
@@ -367,10 +369,10 @@ export default function AdminUsersPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -414,7 +416,7 @@ export default function AdminUsersPage() {
           <Shield className="h-16 w-16 mx-auto text-red-500 mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
           <p className="text-gray-600 mb-6">You don&apos;t have permission to access the admin dashboard.</p>
-          <Button onClick={() => router.push('/dashboard')}>
+          <Button onClick={() => router.push('/dashboard/profile')}>
             Go to Dashboard
           </Button>
         </div>
@@ -546,9 +548,6 @@ export default function AdminUsersPage() {
                 <CardTitle>All Users</CardTitle>
                 <CardDescription>View and manage user accounts</CardDescription>
               </div>
-              <Button asChild>
-                <Link href="/admin/billing">View Billing</Link>
-              </Button>
             </div>
           </CardHeader>
           <CardContent>

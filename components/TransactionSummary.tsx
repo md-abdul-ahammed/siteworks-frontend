@@ -31,7 +31,7 @@ interface SummaryCardProps {
 const SummaryCard: React.FC<SummaryCardProps> = ({
   title,
   amount,
-  currency = '£',
+  currency = '$',
   change,
   changeType,
   icon,
@@ -40,9 +40,9 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   loading = false,
 }) => {
   const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'GBP',
+      currency: 'USD',
     }).format(amount);
   };
 
@@ -121,10 +121,11 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) 
       try {
         setLoading(true);
         
+        const authHeaders = await getAuthHeaders();
         const response = await fetch('/api/dashboard/analytics', {
           headers: {
             'Content-Type': 'application/json',
-            ...getAuthHeaders()
+            ...authHeaders
           }
         });
 
@@ -220,7 +221,7 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) 
                 <span className="text-sm text-muted-foreground">Average Transaction</span>
                 <span className="text-lg font-semibold text-card-foreground">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 
-                    finalData.transactionCount > 0 ? `£${(finalData.totalRevenue / finalData.transactionCount).toFixed(0)}` : '£0'}
+                    finalData.transactionCount > 0 ? `$${(finalData.totalRevenue / finalData.transactionCount).toFixed(0)}` : '$0'}
                 </span>
               </div>
             </div>
@@ -249,14 +250,14 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ data }) 
                 <span className="text-sm text-muted-foreground">This Month</span>
                 <span className="text-lg font-semibold text-card-foreground">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 
-                    `£${(finalData.totalRevenue * 0.15).toFixed(0)}`}
+                    `$${(finalData.totalRevenue * 0.15).toFixed(0)}`}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Projected</span>
                 <span className="text-lg font-semibold text-blue-400">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 
-                    `£${(finalData.totalRevenue * 1.125).toFixed(0)}`}
+                    `$${(finalData.totalRevenue * 1.125).toFixed(0)}`}
                 </span>
               </div>
             </div>

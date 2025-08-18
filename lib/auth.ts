@@ -341,8 +341,8 @@ class AuthService {
   private shouldRefreshToken(token: string): boolean {
     try {
       const decoded = jwtDecode(token) as { exp: number };
-      // Refresh token 2 minutes before it expires
-      return (decoded.exp * 1000) < (Date.now() + 2 * 60 * 1000);
+      // Refresh token 1 hour before it expires (since tokens now last 7 days)
+      return (decoded.exp * 1000) < (Date.now() + 60 * 60 * 1000);
     } catch {
       return true;
     }
@@ -479,11 +479,23 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<User | null> {
-    if (!this.accessToken || this.isTokenExpired(this.accessToken)) {
-      return null;
-    }
-
     try {
+      // If we don't have a token, nothing to do
+      if (!this.accessToken) {
+        return null;
+      }
+
+      // If token is expired, attempt a refresh before giving up
+      if (this.isTokenExpired(this.accessToken)) {
+        console.log('🔄 Access token expired when fetching current user, attempting refresh...');
+        try {
+          await this.handleTokenExpiration();
+        } catch (refreshError) {
+          console.error('❌ Failed to refresh token while fetching current user:', refreshError);
+          return null;
+        }
+      }
+
       const response = await this.makeRequest<{ success: boolean; customer: User }>('/api/auth/profile');
       this.user = response.customer; // Backend returns 'customer' not 'user'
       this.saveTokensToStorage();
@@ -585,13 +597,68 @@ class AuthService {
     return this.accessToken;
   }
 
-  getAuthHeaders(): Record<string, string> {
+  async getAuthHeaders(): Promise<Record<string, string>> {
     const token = this.getAccessToken();
+    
+    // Debug logging
+    console.log('🔐 getAuthHeaders called:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      tokenPreview: token ? token.substring(0, 50) + '...' : 'No token',
+      isAuthenticated: this.isAuthenticated()
+    });
+    
+    // If no token, return empty headers
+    if (!token) {
+      console.log('❌ No token available');
+      return {
+        'Content-Type': 'application/json'
+      };
+    }
+    
+    // If token is expired, try to refresh it
+    if (this.isTokenExpired(token)) {
+      console.log('🔄 Token is expired, attempting to refresh...');
+      try {
+        await this.handleTokenExpiration();
+        const newToken = this.getAccessToken();
+        if (newToken && !this.isTokenExpired(newToken)) {
+          console.log('✅ Token refreshed successfully');
+          return {
+            'Authorization': `Bearer ${newToken}`,
+            'Content-Type': 'application/json'
+          };
+        }
+      } catch (error) {
+        console.error('❌ Failed to refresh token:', error);
+        this.clearTokens();
+        return {
+          'Content-Type': 'application/json'
+        };
+      }
+    }
+    
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     };
   }
+
+  // Force clear all tokens and redirect to sign-in
+  forceReauthentication(): void {
+    console.log('🔄 Forcing re-authentication...');
+    this.clearTokens();
+    
+    // Redirect to sign-in page if in browser
+    if (typeof window !== 'undefined') {
+      window.location.href = '/sign-in';
+    }
+  }
 }
 
-export const authService = AuthService.getInstance(); 
+export const authService = AuthService.getInstance();
+
+// Export getAuthHeaders function for use in API routes
+export async function getAuthHeaders(): Promise<Record<string, string>> {
+  return await authService.getAuthHeaders();
+} 

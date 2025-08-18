@@ -45,10 +45,10 @@ export default function TestAdminPage() {
           <h2 className="text-lg font-semibold">Actions:</h2>
           <div className="space-x-4">
             <button 
-              onClick={() => window.location.href = '/admin/dashboard'}
+              onClick={() => window.location.href = '/admin/users'}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
-              Go to Admin Dashboard
+              Go to Admin Users
             </button>
             <button 
               onClick={() => window.location.href = '/admin'}

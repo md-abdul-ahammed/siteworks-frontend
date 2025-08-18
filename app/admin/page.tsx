@@ -90,14 +90,14 @@ export default function UserDashboard() {
     // If user is not admin, redirect to dashboard
     if (user.role !== 'admin') {
       console.log('❌ User is not admin, redirecting to dashboard');
-      router.push('/dashboard');
+              router.push('/dashboard/profile');
       return;
     }
 
-    // Redirect admin to dashboard by default
+    // Redirect admin to users page by default
     if (user.role === 'admin') {
-      console.log('✅ User is admin, redirecting to admin dashboard');
-      router.push('/admin/dashboard');
+      console.log('✅ User is admin, redirecting to admin users');
+      router.push('/admin/users');
       return;
     }
   }, [user, isLoading, router]);
@@ -117,10 +117,11 @@ export default function UserDashboard() {
       });
 
       console.log('🔍 Fetching users with params:', params.toString());
-      console.log('🔑 Auth headers:', authService.getAuthHeaders());
+      const authHeaders = await authService.getAuthHeaders();
+      console.log('🔑 Auth headers:', authHeaders);
 
       const response = await fetch(`/api/admin/users?${params}`, {
-        headers: authService.getAuthHeaders()
+        headers: authHeaders
       });
 
       console.log('📊 Response status:', response.status);
@@ -182,10 +183,11 @@ export default function UserDashboard() {
 
   const updateUserStatus = async (userId: string, isActive: boolean) => {
     try {
+      const authHeaders = await authService.getAuthHeaders();
       const response = await fetch(`/api/admin/users/${userId}/status`, {
         method: 'PATCH',
         headers: {
-          ...authService.getAuthHeaders(),
+          ...authHeaders,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ isActive })
@@ -202,10 +204,11 @@ export default function UserDashboard() {
 
   const updateUserVerification = async (userId: string, isVerified: boolean) => {
     try {
+      const authHeaders = await authService.getAuthHeaders();
       const response = await fetch(`/api/admin/users/${userId}/verification`, {
         method: 'PATCH',
         headers: {
-          ...authService.getAuthHeaders(),
+          ...authHeaders,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ isVerified })
@@ -221,7 +224,7 @@ export default function UserDashboard() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -275,7 +278,7 @@ export default function UserDashboard() {
           <Shield className="h-16 w-16 mx-auto text-red-500 mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
           <p className="text-gray-600 mb-6">You don&apos;t have permission to access the admin dashboard.</p>
-          <Button onClick={() => router.push('/dashboard')}>
+          <Button onClick={() => router.push('/dashboard/profile')}>
             Go to Dashboard
           </Button>
         </div>

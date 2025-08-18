@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { ErrorDisplay } from '@/components/ui/error-display';
+import SubscriptionManagement from '@/components/SubscriptionManagement';
 
 interface Invoice {
   id: string;
@@ -38,14 +39,11 @@ interface Invoice {
 
 interface BillingStats {
   totalInvoices: number;
-  totalAmount: number;
-  paidInvoices: number;
-  pendingInvoices: number;
-  overdueInvoices: number;
+  signUpDate: string;
 }
 
 const UserBillingPage: React.FC = () => {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, user } = useAuth();
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]); // Store all data
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]); // Filtered data
   const [displayedInvoices, setDisplayedInvoices] = useState<Invoice[]>([]); // Current page data
@@ -91,22 +89,14 @@ const UserBillingPage: React.FC = () => {
     setDisplayedInvoices(paginatedInvoices);
 
     // Update stats for filtered data
-    if (filtered.length > 0) {
+    if (filtered.length > 0 || user) {
       const filteredStats = {
         totalInvoices: filtered.length,
-        totalAmount: filtered.reduce((sum, inv) => sum + (inv.amount || 0), 0),
-        paidInvoices: filtered.filter(inv => inv.status === 'paid' || inv.status === 'partially_paid').length,
-        pendingInvoices: filtered.filter(inv => 
-          inv.status === 'pending' || 
-          inv.status === 'sent' || 
-          inv.status === 'approved' || 
-          inv.status === 'pending_approval'
-        ).length,
-        overdueInvoices: filtered.filter(inv => inv.status === 'overdue').length
+        signUpDate: user?.createdAt || new Date().toISOString()
       };
       setStats(filteredStats);
     }
-  }, [allInvoices, searchTerm, statusFilter, currentPage, itemsPerPage]);
+  }, [allInvoices, searchTerm, statusFilter, currentPage, itemsPerPage, user]);
 
   const fetchAllBillingData = useCallback(async () => {
     try {
@@ -117,10 +107,11 @@ const UserBillingPage: React.FC = () => {
         source: 'zoho'
       });
 
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`/api/billing/invoices?${params}`, {
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders()
+          ...authHeaders
         },
       });
 
@@ -156,9 +147,10 @@ const UserBillingPage: React.FC = () => {
 
   const downloadInvoice = async (invoiceId: string) => {
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`/api/billing/invoices/${invoiceId}/pdf?stream=true&disposition=attachment`, {
         headers: {
-          ...getAuthHeaders()
+          ...authHeaders
         },
       });
 
@@ -179,14 +171,14 @@ const UserBillingPage: React.FC = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'GBP'
+      currency: 'USD'
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -261,13 +253,13 @@ const UserBillingPage: React.FC = () => {
       <DashboardLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
-        <div className="mb-8">
-          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <div className="mb-8">
+            <div className="bg-card rounded-lg shadow-sm border border-border p-6">
               <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-accent rounded-lg">
-                <CreditCard className="h-8 w-8 text-accent-foreground" />
-              </div>
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-accent rounded-lg">
+                    <CreditCard className="h-8 w-8 text-accent-foreground" />
+                  </div>
                   <div>
                     <h1 className="text-3xl font-bold text-card-foreground">My Billing</h1>
                     <p className="text-muted-foreground mt-1">View and manage your billing information</p>
@@ -283,7 +275,7 @@ const UserBillingPage: React.FC = () => {
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Total Invoices */}
               <Card className="shadow-lg">
                 <CardContent className="p-6">
@@ -299,54 +291,27 @@ const UserBillingPage: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Total Amount */}
+              {/* Sign Up Date */}
               <Card className="shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-                      <p className="text-2xl font-bold text-card-foreground">
-                        {formatCurrency(stats.totalAmount)}
-                      </p>
+                      <p className="text-sm font-medium text-muted-foreground">Sign Up Date</p>
+                      <p className="text-2xl font-bold text-card-foreground">{formatDate(stats.signUpDate)}</p>
                     </div>
                     <div className="p-3 bg-green-100 rounded-lg">
-                      <DollarSign className="h-6 w-6 text-green-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Paid Invoices */}
-              <Card className="shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Paid Invoices</p>
-                      <p className="text-2xl font-bold text-card-foreground">{stats.paidInvoices}</p>
-                    </div>
-                    <div className="p-3 bg-green-100 rounded-lg">
-                      <TrendingUp className="h-6 w-6 text-green-600" />
-          </div>
-        </div>
-                </CardContent>
-              </Card>
-
-              {/* Pending Invoices */}
-              <Card className="shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Pending Invoices</p>
-                      <p className="text-2xl font-bold text-card-foreground">{stats.pendingInvoices}</p>
-                    </div>
-                    <div className="p-3 bg-yellow-100 rounded-lg">
-                      <Calendar className="h-6 w-6 text-yellow-600" />
+                      <Calendar className="h-6 w-6 text-green-600" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
           )}
+
+          {/* Subscription Management */}
+          <div className="mb-8">
+            <SubscriptionManagement />
+          </div>
 
           {/* Filters */}
           <Card className="mb-6">
@@ -359,7 +324,9 @@ const UserBillingPage: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="search" className='mb-3'>Search</Label>
+                  <Label htmlFor="search" className="mb-3">
+                    Search
+                  </Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
@@ -372,7 +339,9 @@ const UserBillingPage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="status" className='mb-3'>Status</Label>
+                  <Label htmlFor="status" className="mb-3">
+                    Status
+                  </Label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger>
                       <SelectValue placeholder="All statuses" />
@@ -433,45 +402,27 @@ const UserBillingPage: React.FC = () => {
                         <TableRow key={invoice.id}>
                           <TableCell>
                             <div>
-                              <div className="font-medium text-card-foreground">
-                                {invoice.invoiceNumber}
-                              </div>
+                              <div className="font-medium text-card-foreground">{invoice.invoiceNumber}</div>
                               <div className="text-sm text-muted-foreground">#{invoice.id}</div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium text-card-foreground">
-                              {formatCurrency(invoice.amount)}
-                            </div>
+                            <div className="font-medium text-card-foreground">{formatCurrency(invoice.amount)}</div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                          <TableCell>
+                            <div className="text-sm">{formatDate(invoice.dueDate)}</div>
                           </TableCell>
                           <TableCell>
-                            {getStatusBadge(invoice.status)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {formatDate(invoice.dueDate)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {formatDate(invoice.createdDate)}
-                            </div>
+                            <div className="text-sm">{formatDate(invoice.createdDate)}</div>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => downloadInvoice(invoice.id)}
-                              >
+                              <Button variant="ghost" size="sm" onClick={() => downloadInvoice(invoice.id)}>
                                 <Download className="h-4 w-4" />
                               </Button>
                               {invoice.pdfUrl && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => window.open(invoice.pdfUrl, '_blank')}
-                                >
+                                <Button variant="ghost" size="sm" onClick={() => window.open(invoice.pdfUrl, "_blank")}>
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               )}
@@ -489,21 +440,21 @@ const UserBillingPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
                   <div className="flex items-center gap-4">
                     <p className="text-sm text-muted-foreground">
-                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length} invoices
+                      Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                      {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length}{" "}
+                      invoices
                       {allInvoices.length !== filteredInvoices.length && (
-                        <span className="text-xs text-blue-600 ml-1">
-                          (filtered from {allInvoices.length} total)
-                        </span>
+                        <span className="text-xs text-blue-600 ml-1">(filtered from {allInvoices.length} total)</span>
                       )}
                     </p>
-                    
+
                     {/* Items per page selector */}
                     <div className="flex items-center gap-2">
                       <Label htmlFor="itemsPerPage" className="text-sm text-muted-foreground">
                         Show:
                       </Label>
-                      <Select 
-                        value={itemsPerPage.toString()} 
+                      <Select
+                        value={itemsPerPage.toString()}
                         onValueChange={(value) => {
                           setItemsPerPage(parseInt(value));
                           setCurrentPage(1); // Reset to first page when changing items per page
@@ -522,7 +473,7 @@ const UserBillingPage: React.FC = () => {
                       </Select>
                     </div>
                   </div>
-                  
+
                   {totalPages > 1 && (
                     <div className="flex items-center gap-2">
                       {/* First Page */}
@@ -535,7 +486,7 @@ const UserBillingPage: React.FC = () => {
                       >
                         First
                       </Button>
-                      
+
                       {/* Previous Page */}
                       <Button
                         variant="outline"
@@ -546,91 +497,91 @@ const UserBillingPage: React.FC = () => {
                         Previous
                       </Button>
 
-                    {/* Page Numbers */}
-                    <div className="flex items-center gap-1">
-                      {(() => {
-                        const pages = [];
-                        const maxVisiblePages = 5;
-                        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-                        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-                        
-                        // Adjust startPage if we're near the end
-                        if (endPage - startPage + 1 < maxVisiblePages) {
-                          startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                        }
+                      {/* Page Numbers */}
+                      <div className="flex items-center gap-1">
+                        {(() => {
+                          const pages = [];
+                          const maxVisiblePages = 5;
+                          let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                          const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-                        // Add ellipsis at the beginning if needed
-                        if (startPage > 1) {
-                          pages.push(
-                            <Button
-                              key={1}
-                              variant={1 === currentPage ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setCurrentPage(1)}
-                              className="w-10 h-8"
-                            >
-                              1
-                            </Button>
-                          );
-                          if (startPage > 2) {
+                          // Adjust startPage if we're near the end
+                          if (endPage - startPage + 1 < maxVisiblePages) {
+                            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                          }
+
+                          // Add ellipsis at the beginning if needed
+                          if (startPage > 1) {
                             pages.push(
-                              <span key="ellipsis1" className="px-2 text-muted-foreground">
-                                ...
-                              </span>
+                              <Button
+                                key={1}
+                                variant={1 === currentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(1)}
+                                className="w-10 h-8"
+                              >
+                                1
+                              </Button>
+                            );
+                            if (startPage > 2) {
+                              pages.push(
+                                <span key="ellipsis1" className="px-2 text-muted-foreground">
+                                  ...
+                                </span>
+                              );
+                            }
+                          }
+
+                          // Add visible page numbers
+                          for (let i = startPage; i <= endPage; i++) {
+                            pages.push(
+                              <Button
+                                key={i}
+                                variant={i === currentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(i)}
+                                className="w-10 h-8"
+                              >
+                                {i}
+                              </Button>
                             );
                           }
-                        }
 
-                        // Add visible page numbers
-                        for (let i = startPage; i <= endPage; i++) {
-                          pages.push(
-                            <Button
-                              key={i}
-                              variant={i === currentPage ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setCurrentPage(i)}
-                              className="w-10 h-8"
-                            >
-                              {i}
-                            </Button>
-                          );
-                        }
-
-                        // Add ellipsis at the end if needed
-                        if (endPage < totalPages) {
-                          if (endPage < totalPages - 1) {
+                          // Add ellipsis at the end if needed
+                          if (endPage < totalPages) {
+                            if (endPage < totalPages - 1) {
+                              pages.push(
+                                <span key="ellipsis2" className="px-2 text-muted-foreground">
+                                  ...
+                                </span>
+                              );
+                            }
                             pages.push(
-                              <span key="ellipsis2" className="px-2 text-muted-foreground">
-                                ...
-                              </span>
+                              <Button
+                                key={totalPages}
+                                variant={totalPages === currentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(totalPages)}
+                                className="w-10 h-8"
+                              >
+                                {totalPages}
+                              </Button>
                             );
                           }
-                          pages.push(
-                            <Button
-                              key={totalPages}
-                              variant={totalPages === currentPage ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setCurrentPage(totalPages)}
-                              className="w-10 h-8"
-                            >
-                              {totalPages}
-                            </Button>
-                          );
-                        }
 
-                        return pages;
-                      })()}
-                    </div>
+                          return pages;
+                        })()}
+                      </div>
 
-                    {/* Next Page */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                    </Button>
+                      {/* Next Page */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </Button>
 
                       {/* Last Page */}
                       <Button

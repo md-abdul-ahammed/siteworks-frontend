@@ -3,8 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { DashboardSkeleton } from './DashboardSkeleton';
-import { PageLoading } from './PageLoading';
 import { Button } from '@/components/ui/button';
 import { ErrorDisplay } from '@/components/ui/error-display';
 
@@ -40,10 +38,8 @@ export const UserOnlyRoute: React.FC<UserOnlyRouteProps> = ({
 
   if (isLoading) {
     console.log('⏳ UserOnlyRoute - Loading...');
-    if (fallback) {
-      return <>{fallback}</>;
-    }
-    return useDashboardSkeleton ? <DashboardSkeleton /> : <PageLoading />;
+    // Return null instead of showing any loader
+    return null;
   }
 
   if (!isAuthenticated) {

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Edit, Save, X, User, MapPin, Phone, Mail, Loader2 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import BankDetailsUpdate from '@/components/BankDetailsUpdate';
 
 const ProfilePage: React.FC = () => {
   const { user, updateProfile } = useAuth();
@@ -164,16 +165,17 @@ const ProfilePage: React.FC = () => {
   };
 
   return (
-    <UserOnlyRoute useDashboardSkeleton={true}>
+    <UserOnlyRoute useDashboardSkeleton={false}>
       <DashboardLayout>
-        {/* Profile Header */}
-        <div className="mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Profile Header */}
+          <div className="mb-8">
           <div className="bg-card rounded-lg shadow-sm border border-border p-6">
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
                 <AvatarImage src="/avatars/01.png" alt={user?.firstName} />
                 <AvatarFallback className="bg-accent text-accent-foreground text-xl">
-                  {getInitials(user?.firstName || '', user?.lastName || '')}
+                  {getInitials(user?.firstName || "", user?.lastName || "")}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
@@ -192,11 +194,11 @@ const ProfilePage: React.FC = () => {
               <CardDescription className="text-muted-foreground">Your basic profile details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {renderEditableField('firstName', 'First Name', editForm.firstName, <User className="h-4 w-4" />)}
-              {renderEditableField('lastName', 'Last Name', editForm.lastName, <User className="h-4 w-4" />)}
-              {renderEditableField('companyName', 'Company Name', editForm.companyName, <User className="h-4 w-4" />)}
-              {renderEditableField('email', 'Email', editForm.email, <Mail className="h-4 w-4" />)}
-              {renderEditableField('phone', 'Phone', editForm.phone, <Phone className="h-4 w-4" />)}
+              {renderEditableField("firstName", "First Name", editForm.firstName, <User className="h-4 w-4" />)}
+              {renderEditableField("lastName", "Last Name", editForm.lastName, <User className="h-4 w-4" />)}
+              {renderEditableField("companyName", "Company Name", editForm.companyName, <User className="h-4 w-4" />)}
+              {renderEditableField("email", "Email", editForm.email, <Mail className="h-4 w-4" />)}
+              {renderEditableField("phone", "Phone", editForm.phone, <Phone className="h-4 w-4" />)}
             </CardContent>
           </Card>
 
@@ -206,13 +208,26 @@ const ProfilePage: React.FC = () => {
               <CardDescription className="text-muted-foreground">Your contact address</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {renderEditableField('addressLine1', 'Address Line 1', editForm.addressLine1, <MapPin className="h-4 w-4" />)}
-              {renderEditableField('addressLine2', 'Address Line 2', editForm.addressLine2, <MapPin className="h-4 w-4" />)}
-              {renderEditableField('city', 'City', editForm.city, <MapPin className="h-4 w-4" />)}
-              {renderEditableField('state', 'State', editForm.state, <MapPin className="h-4 w-4" />)}
-              {renderEditableField('postcode', 'Postcode', editForm.postcode, <MapPin className="h-4 w-4" />)}
+              {renderEditableField(
+                "addressLine1",
+                "Address Line 1",
+                editForm.addressLine1,
+                <MapPin className="h-4 w-4" />
+              )}
+              {renderEditableField(
+                "addressLine2",
+                "Address Line 2",
+                editForm.addressLine2,
+                <MapPin className="h-4 w-4" />
+              )}
+              {renderEditableField("city", "City", editForm.city, <MapPin className="h-4 w-4" />)}
+              {renderEditableField("state", "State", editForm.state, <MapPin className="h-4 w-4" />)}
+              {renderEditableField("postcode", "Postcode", editForm.postcode, <MapPin className="h-4 w-4" />)}
             </CardContent>
           </Card>
+          
+        </div>
+          <BankDetailsUpdate />
         </div>
       </DashboardLayout>
     </UserOnlyRoute>

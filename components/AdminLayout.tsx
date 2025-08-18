@@ -6,9 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
-  LayoutDashboard,
   Users,
-  CreditCard,
   LogOut,
   Menu,
   X,
@@ -39,7 +37,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // Redirect if not admin (only if user is loaded and not admin)
   if (user && user.role !== 'admin') {
     console.log('❌ AdminLayout: User is not admin, redirecting to dashboard');
-    router.push('/dashboard');
+    router.push('/dashboard/profile');
     return null;
   }
 
@@ -58,27 +56,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const navigation = [
     {
-      name: 'Dashboard',
-      href: '/admin/dashboard',
-      icon: LayoutDashboard,
-      current: pathname === '/admin/dashboard',
-    },
-    {
       name: 'Users',
       href: '/admin/users',
       icon: Users,
       current: pathname === '/admin/users',
     },
-    {
-      name: 'Billing',
-      href: '/admin/billing',
-      icon: CreditCard,
-      current: pathname === '/admin/billing',
-    },
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex dashboard-dark">
+    <div className="h-screen overflow-hidden bg-background text-foreground flex dashboard-dark">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div

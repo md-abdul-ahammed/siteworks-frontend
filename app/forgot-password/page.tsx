@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { showToast } from '@/lib/toast';
 
 interface ForgotPasswordFormData {
   email: string;
@@ -70,14 +70,14 @@ const ForgotPasswordPage: React.FC = () => {
       }
       
       setLocalError(errorMessage);
-      toast.error(errorMessage);
+      showToast.error(errorMessage);
     }
   };
 
   const getMessageStyles = (type: 'success' | 'error' | 'info') => {
     switch (type) {
       case 'success':
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+        return 'text-green-700 bg-green-50 border-green-200';
       case 'error':
         return 'text-red-600 bg-red-50 border-red-200';
       default:
@@ -116,7 +116,7 @@ const ForgotPasswordPage: React.FC = () => {
             <div className={`p-4 rounded-md border ${getMessageStyles('success')}`}>
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 </div>

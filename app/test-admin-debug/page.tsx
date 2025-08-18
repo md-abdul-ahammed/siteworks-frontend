@@ -141,10 +141,10 @@ export default function TestAdminDebugPage() {
               Clear Storage & Reload
             </Button>
             <Button 
-              onClick={() => window.location.href = '/admin/dashboard'}
+              onClick={() => window.location.href = '/admin/users'}
               className="w-full"
             >
-              Go to Admin Dashboard
+              Go to Admin Users
             </Button>
           </CardContent>
         </Card>

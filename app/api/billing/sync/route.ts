@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     
     // Build the backend URL
-    const backendUrl = new URL('/api/billing/sync', BACKEND_URL);
+    const backendUrl = new URL('/api/billing/sync-subscriptions', BACKEND_URL);
 
     // Make the request to the backend
     const response = await fetch(backendUrl.toString(), {

@@ -36,10 +36,14 @@ export interface ValidationResult {
  */
 export async function validateBankDetails(bankDetails: BankDetails): Promise<ValidationResult> {
   try {
+    // Import authService dynamically to avoid circular dependency
+    const { authService } = await import('./auth');
+    
+    const authHeaders = await authService.getAuthHeaders();
     const response = await fetch('/api/auth/validate-bank-details', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        ...authHeaders,
       },
       body: JSON.stringify(bankDetails),
     });

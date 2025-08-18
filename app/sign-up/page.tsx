@@ -35,7 +35,7 @@ const CustomerDetailsForm: React.FC = () => {
     console.log('🔍 Sign-up page - isAuthenticated:', isAuthenticated, 'user:', user);
     if (isAuthenticated) {
       console.log('✅ User is authenticated, redirecting to dashboard...');
-      router.push('/dashboard');
+      router.push('/dashboard/profile');
     }
   }, [isAuthenticated, router, user]);
   
@@ -86,7 +86,7 @@ const CustomerDetailsForm: React.FC = () => {
       }
       
       // Redirect to dashboard
-      router.push('/dashboard');
+      router.push('/dashboard/profile');
       
     } catch (error) {
       console.error('Registration error:', error);

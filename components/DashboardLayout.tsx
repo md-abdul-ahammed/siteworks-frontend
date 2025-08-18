@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
-  LayoutDashboard, 
   User, 
   CreditCard, 
   Settings, 
@@ -41,12 +40,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const navigation = isAdmin
     ? [
         {
-          name: 'Dashboard',
-          href: '/dashboard',
-          icon: LayoutDashboard,
-          current: pathname === '/dashboard',
-        },
-        {
           name: 'Users',
           href: '/admin',
           icon: Users,
@@ -60,12 +53,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         },
       ]
     : [
-        {
-          name: 'Dashboard',
-          href: '/dashboard',
-          icon: LayoutDashboard,
-          current: pathname === '/dashboard',
-        },
         {
           name: 'Profile',
           href: '/dashboard/profile',
@@ -81,7 +68,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex dashboard-dark">
+    <div className="h-screen overflow-hidden bg-background text-foreground flex dashboard-dark">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black bg-opacity-75 lg:hidden" onClick={() => setSidebarOpen(false)} />

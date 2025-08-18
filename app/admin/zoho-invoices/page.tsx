@@ -48,6 +48,7 @@ export default function AdminZohoInvoicesPage() {
   const [status, setStatus] = useState<string>('');
   const [source, setSource] = useState<'db' | 'zoho'>('zoho');
   const [selected, setSelected] = useState<InvoiceRecord | null>(null); // kept for modal state
+  const [authToken, setAuthToken] = useState<string>('');
 
   const isMounted = useRef(true);
 
@@ -57,10 +58,11 @@ export default function AdminZohoInvoicesPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: '10', source });
       if (status) params.append('status', status);
+      const authHeaders = await getAuthHeaders();
       const res = await fetch(`/api/admin/zoho/invoices?${params.toString()}`, {
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders(),
+          ...authHeaders,
         },
       });
       const json = await res.json();
@@ -80,6 +82,15 @@ export default function AdminZohoInvoicesPage() {
 
   useEffect(() => {
     isMounted.current = true;
+    (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const token = headers.Authorization?.split(' ')[1] || '';
+        setAuthToken(token);
+      } catch (e) {
+        setAuthToken('');
+      }
+    })();
     fetchInvoices();
     return () => {
       isMounted.current = false;
@@ -87,8 +98,8 @@ export default function AdminZohoInvoicesPage() {
   }, [fetchInvoices]);
 
   const formatCurrency = (amount: number, currency: string) =>
-    new Intl.NumberFormat('en-GB', { style: 'currency', currency: currency || 'GBP' }).format(amount);
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount);
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
   const getStatusBadge = (s: string) => {
     const map: Record<string, { color: string; text: string }> = {
@@ -146,7 +157,7 @@ export default function AdminZohoInvoicesPage() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Amount</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-card-foreground">{formatCurrency(data.summary.totalAmount, 'GBP')}</div>
+                <div className="text-2xl font-bold text-card-foreground">{formatCurrency(data.summary.totalAmount, 'USD')}</div>
               </CardContent>
             </Card>
             <Card className="bg-card border-border">
@@ -154,7 +165,7 @@ export default function AdminZohoInvoicesPage() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Paid Amount</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{formatCurrency(data.summary.paidAmount, 'GBP')}</div>
+                <div className="text-2xl font-bold text-green-600">{formatCurrency(data.summary.paidAmount, 'USD')}</div>
               </CardContent>
             </Card>
             <Card className="bg-card border-border">
@@ -162,7 +173,7 @@ export default function AdminZohoInvoicesPage() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Pending Amount</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{formatCurrency(data.summary.pendingAmount, 'GBP')}</div>
+                <div className="text-2xl font-bold text-yellow-600">{formatCurrency(data.summary.pendingAmount, 'USD')}</div>
               </CardContent>
             </Card>
           </div>
@@ -184,8 +195,9 @@ export default function AdminZohoInvoicesPage() {
               onClick={async () => {
                 const testId = '5442941000002835015'; // Use first invoice ID from your list
                 try {
+                  const authHeaders = await getAuthHeaders();
                   const res = await fetch(`/api/admin/zoho/test?invoiceId=${testId}`, {
-                    headers: getAuthHeaders()
+                    headers: authHeaders
                   });
                   const data = await res.json();
                   console.log('🔍 Zoho Test Result:', data);
@@ -280,7 +292,7 @@ export default function AdminZohoInvoicesPage() {
                                 <div className="border border-border rounded overflow-hidden h-[480px]">
                                   <iframe
                                     title={`invoice-${record.zohoInvoiceId || record.id}`}
-                                    src={`/api/admin/zoho/invoices/${record.zohoInvoiceId || record.id}/pdf?stream=true&disposition=inline&token=${encodeURIComponent(getAuthHeaders().Authorization?.split(' ')[1] || '')}`}
+                                    src={`/api/admin/zoho/invoices/${record.zohoInvoiceId || record.id}/pdf?stream=true&disposition=inline&token=${encodeURIComponent(authToken)}`}
                                     className="w-full h-full"
                                   />
                                 </div>
@@ -290,7 +302,7 @@ export default function AdminZohoInvoicesPage() {
                               <div>
                                 <h4 className="font-medium text-card-foreground mb-2">Invoice PDF</h4>
                                 <Button size="sm" asChild>
-                                  <a href={`/api/admin/zoho/invoices/${record.zohoInvoiceId || record.id}/pdf?stream=true&disposition=attachment&token=${encodeURIComponent(getAuthHeaders().Authorization?.split(' ')[1] || '')}`}>
+                                  <a href={`/api/admin/zoho/invoices/${record.zohoInvoiceId || record.id}/pdf?stream=true&disposition=attachment&token=${encodeURIComponent(authToken)}`}>
                                     <Download className="h-4 w-4 mr-2" />
                                     Get PDF
                                   </a>

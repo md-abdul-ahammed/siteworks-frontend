@@ -145,10 +145,11 @@ const BillingHistory: React.FC = () => {
         params.append('status', status);
       }
 
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`/api/billing/history?${params}`, {
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders()
+          ...authHeaders
         }
       });
 
@@ -197,11 +198,12 @@ const BillingHistory: React.FC = () => {
     try {
       setSyncing(true);
       
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/billing/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders()
+          ...authHeaders
         }
       });
 
@@ -250,10 +252,11 @@ const BillingHistory: React.FC = () => {
     try {
       setDownloadLoading(receipt.id);
       
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`/api/billing/receipts/${receipt.id}/download`, {
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders()
+          ...authHeaders
         }
       });
       
